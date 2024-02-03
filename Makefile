@@ -1,48 +1,47 @@
-SRC 	=			\
-src/main.c
+SRC 	=	$(wildcard src/*.cpp)
 
 
-OBJ =   $(patsubst src/%.c, obj/%.o, $(SRC))
+OBJ =   $(patsubst src/%.cpp, obj/%.o, $(SRC))
 
-CC  =   gcc
+CXX  =   g++
 DEBUG   =   -ggdb3 -DDEBUG_MODE
 
 RELEASE = -O2
 SANITIZE	=	-fsanitize=address,undefined -fsanitize-recover=address,undefined
 ANALYZER	=
 
-CFLAGS  +=  -Wall -Wextra -pedantic -fsigned-char -funsigned-bitfields -std=c17
+CXXFLAGS  +=  -Wall -Wextra -pedantic -fsigned-char -funsigned-bitfields -std=c++23
 LDFLAGS	+=
 LD_PRELOAD	=
 
 NAME    =   pgn_compressor
 
 .PHONY: all re
-all: CFLAGS += $(RELEASE)
+all: CXXFLAGS += $(RELEASE)
 all: $(NAME)
 re: fclean all
 
 .PHONY: debug redebug
-debug: CFLAGS += $(DEBUG)
+debug: CXXFLAGS += $(DEBUG)
 debug: $(NAME)
 redebug: fclean debug
 
 .PHONY: sanitize resanitize
-sanitize: CFLAGS += $(DEBUG) $(SANITIZE)
+sanitize: CXXFLAGS += $(DEBUG) $(SANITIZE)
 sanitize: LD_PRELOAD += -lasan -lubsan
 sanitize: $(NAME)
 resanitize: fclean sanitize
 
 .PHONY: analyzer reanalyzer
 analyzer: ANALYZER += on
-analyzer: CFLAGS += $(DEBUG) -fanalyzer
+analyzer: CXXFLAGS += $(DEBUG) -fanalyzer
 analyzer: $(NAME)
 reanalyzer: fclean analyzer
 
 .PHONY: display_info
 display_info:
-	@$(CC) --version | head -n 1
-	@echo CFLAGS : $(CFLAGS)
+	@$(CXX) --version | head -n 1
+	@echo CXXFLAGS : $(CXXFLAGS)
 	@echo LDFLAGS : $(LD_PRELOAD) $(LDFLAGS)
 	@echo -------------
 
@@ -54,13 +53,13 @@ remove_old_analyzer:
 	fi
 
 $(NAME): display_info remove_old_analyzer $(OBJ)
-	@$(CC) $(OBJ) $(LD_PRELOAD) $(LDFLAGS) -o $(NAME)
+	@$(CXX) $(OBJ) $(LD_PRELOAD) $(LDFLAGS) -o $(NAME)
 
-obj/%.o: src/%.c
+obj/%.o: src/%.cpp
 	@if [[ "$(ANALYZER)" != "" ]]; then						\
-		$(CC) -c $(CFLAGS) $< -o $@ 2>> ./analyzer.log;	\
+		$(CXX) -c $(CXXFLAGS) $< -o $@ 2>> ./analyzer.log;	\
 	else													\
-		$(CC) -c $(CFLAGS) $< -o $@;						\
+		$(CXX) -c $(CXXFLAGS) $< -o $@;						\
 	fi
 
 .PHONY: clean_vgcore
