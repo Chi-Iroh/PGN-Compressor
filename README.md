@@ -284,7 +284,8 @@ As an example, `e8=Q` (there's only one pawn on the 7th rank) is encoded as `\11
 
 The same move `e8=Q` is then encoded `\111\0\00\1` if there's a pawn on B7, as this one can also promote.  
 
-Ambiguous promotion : <img src="doc_assets/promotion_3_ways.png">  
+Ambiguous promotion :  
+<img src="doc_assets/promotion_3_ways.png">  
 Here, the black pawn in B2 can be promoted in 3 different ways :
 - captures rook on A1
 - simply moves forward to B1
