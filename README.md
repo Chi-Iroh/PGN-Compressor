@@ -545,48 +545,57 @@ Here is an example of a PGN which uses every aforementioned notation :
 ```
 
 This game is encoded as :
-- `\010\10` : 2 en passant, the first one has e.p but the second one hasn't
-- `\110\1Date\00000000Epoch: 01/01/1970\00000000` : `Date` tag
-- `\101\100\011` : e4
-- `\101\100\101` : e6
-- `\101\100\100` : e5
-- `\101\011\100` : d5
-- `\111\1\1\000` : starts new alternative moves sequence (no en passant, hence the last 3 bits are 0)
-- `\101\011\101` : d6
-- `\110\1\Avoids en passant\00000000` : {Avoids en passant} comment
-- `\111\1\0` : ends the alternative moves sequence
-- `\101\011\101` : exd6
-- `\001\011\101` : Qxd6
-- `\001\101\010` : Qf3
-- `\010\100\110` : Be7
-- `\101\011\010` : d3
-- `\011\101\101` : Nf6
-- `\010\110\100` : Bg5
-- `\110\1Blunder, Qe5+ wins the bishop.\00000000` : {Blunder, Qe5+ wins the bishop.} comment
-- `\110\0\0\0` : O-O
-- `\011\010\010` : Nc3
-- `\011\011\100` : Nd5
-- `\010\100\110` : Bxe7
-- `\011\100\110` : Nxe7
-- `\110\0\0\1` : O-O-O
-- `\101\000\100` : a5
-- `\101\000\010` : a3
-- `\101\000\011` : a4
-- `\101\001\011` : b4
-- `\101\001\010` : axb3
-- `\110\1En passant !!\00000000` : {En passant !!} comment
-- `\000\011\001` : Kd2
-- `\101\001\001` : b2
-- `\100\000\000` : Ra1
-- `\111\0\00\0` : promotes to a queen in the first square (here, A1)
-- `\110\0\1\00101001` : NAG 41
-- `\110\1Black has the attack\00000000` : {Black has the attack} comment
-- `\101\000\011` : a4
-- `\001\010\010` : Qxc3+
-- `\000\010\010` : Kxc3
-- `\011\011\100` : Nd5
-- `\000\010\011` : Kc4
-- `\001\001\011` : Qb4#
+| Bits | Sum | Compressed | Description |
+| ---- | --- | ---------- | ----------- |
+| 5 | 5 | `\010\10` | 2 en passant, the first one has e.p but the second one hasn't |
+| 4 + 5\*8 + 18\*8 = 188 | 193 | `\110\1Date\00000000Epoch: 01/01/1970\00000000` | `Date` tag |
+| 9 | 202 | `\101\100\011` | e4 |
+| 9 | 211 | `\101\100\101` | e6 |
+| 9 | 220 | `\101\100\100` | e5 |
+| 9 | 229 | `\101\011\100` | d5 |
+| 8 | 237 | `\111\1\1\000` | starts new alternative moves sequence (no en passant, hence the last 3 bits are 0) |
+| 9 | 246 | `\101\011\101` | d6 |
+| 4 + 18*8 = 148 | 394 | `\110\1\Avoids en passant\00000000` : {Avoids en passant} comment
+| 5 | 399 | `\111\1\0` | ends the alternative moves sequence |
+| 9 | 408 |`\101\011\101` | exd6 |
+| 9 | 417 |`\001\011\101` | Qxd6 |
+| 9 | 426 |`\001\101\010` | Qf3 |
+| 9 | 435 |`\010\100\110` | Be7 |
+| 9 | 444 |`\101\011\010` | d3 |
+| 9 | 453 |`\011\101\101` | Nf6 |
+| 9 | 462 |`\010\110\100` | Bg5 |
+| 4 + 31*8 = 260 | 714 | `\110\1Blunder, Qe5+ wins the bishop.\00000000` | {Blunder, Qe5+ wins the bishop.} comment |
+| 6 | 720 | `\110\0\0\0` | O-O |
+| 9 | 729 | `\011\010\010` | Nc3 |
+| 9 | 738 | `\011\011\100` | Nd5 |
+| 9 | 747 | `\010\100\110` | Bxe7 |
+| 9 | 756 | `\011\100\110` | Nxe7 |
+| 6 | 762 | `\110\0\0\1` | O-O-O |
+| 9 | 771 | `\101\000\100` | a5 |
+| 9 | 780 | `\101\000\010` | a3 |
+| 9 | 789 | `\101\000\011` | a4 |
+| 9 | 798 | `\101\001\011` | b4 |
+| 9 | 807 | `\101\001\010` | axb3 |
+| 4 + 14*8 = 116 | 923 | `\110\1En passant !!\00000000` | {En passant !!} comment |
+| 9 | 932 | `\000\011\001` | Kd2 |
+| 9 | 941 | `\101\001\001` | b2 |
+| 9 | 950 | `\100\000\000` | Ra1 |
+| 7 | 957 | `\111\0\00\0` | promotes to a queen in the first square (here, A1) |
+| 13 | 970 | `\110\0\1\00101001` | NAG 41 |
+| 4 + 21*8 = 172 | 1134 | `\110\1Black has the attack\00000000` | {Black has the attack} comment |
+| 9 | 1143 | `\101\000\011` | a4 |
+| 9 | 1152 | `\001\010\010` | Qxc3+ |
+| 9 | 1161 | `\000\010\010` | Kxc3 |
+| 9 | 1170 | `\011\011\100` | Nd5 |
+| 9 | 1179 | `\000\010\011` | Kc4 |
+| 9 | 1188 | `\001\001\011` | Qb4# |
+
+## Compression rate :
+
+The above PGN has 328 bytes / characters (if all the moves are on a single line), thus 328 * 8 = 2624 bits (328 bytes).  
+Then the above table shows the file can be compressed in 1188 bits (148.5 bytes).  
+1188 / 2624 ~= 0.4527, thus this file has a 45.27% coompression rate.  
+Take note this rate might change according to the file content, for instance if there are a bunch of checks, the rate will increase (i.e. in `Qd2+`, the check is deduced and the `+` isn't encoded).  
 
 # Discontinued ideas
 
