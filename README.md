@@ -303,7 +303,7 @@ On the other hand, `a1=Q` is encoded as :
 - `\111\0\00` : promotion to queen
 - `\0` : A < B, first choice
 
-Lastly, here's `bxc1=Q` from the above example :
+Lastly, here's `bxc1=Q` from the penultimate example (with 3 ways to promote) :
 - `\111\0\00` : promotion to queen
 - `\10` : 3rd choice (landing on C file), as there's also A and B
 
