@@ -291,7 +291,8 @@ Here, the black pawn in B2 can be promoted in 3 different ways :
 - simply moves forward to B1
 - captures rook on C1
 
-The other case is when the promoted pawn is on the A or G file : <img src="doc_assets/promotion_corner.png">  
+The other case is when the promoted pawn is on the A or G file :  
+<img src="doc_assets/promotion_corner.png">  
 Here the pawn still has two choices, push or capture, then two possible moves.  
 Then, if the decompressor detects a situation like that (multiple destination squares to be promoted), 1-2 extra bit(s) will be added to store their zero-based file index (0 = smallest = closest to A, 1-2 = more to the right).  
 
