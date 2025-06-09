@@ -622,10 +622,10 @@ int uncompress(const struct args* args) {
     status = status && parse_version(&buf, &version);
     printf("Protocol v%" PRIx8 "\n", version);
     LOG("After version, status %d\n", status);
-    status = status && parse_en_passant_header(&buf, &en_passant_header);
-    LOG("After en passant, status: %d\n", status);
     status = status && parse_tags(&buf, &tags, &n_tags, &max_tags);
     LOG("After tags, status: %d\n", status);
+    status = status && parse_en_passant_header(&buf, &en_passant_header);
+    LOG("After en passant, status: %d\n", status);
     debug_print(&en_passant_header, tags, n_tags);
 
     bool has_moves = false;
