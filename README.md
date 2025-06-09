@@ -640,57 +640,61 @@ Here is an example of a PGN which uses every aforementioned notation :
 This game is encoded as :
 | Bits | Sum | Compressed | Description |
 | ---- | --- | ---------- | ----------- |
-| 6 | 6 | `\0010\10` | 2 en passant, the first one has e.p but the second one hasn't |
-| 5\*8 + 18\*8 = 184 | 190 | `Date\00000000Epoch: 01/01/1970\00000000` | `Date` tag |
-| 8 | 198 | `\00000000`    | NUL byte to end tags |
-| 9 | 207 | `\101\100\011` | e4 |
-| 9 | 216 | `\101\100\101` | e6 |
-| 9 | 225 | `\101\100\100` | e5 |
-| 9 | 234 | `\101\011\100` | d5 |
-| 8 | 242 | `\111\1\1\000` | starts new alternative moves sequence (no en passant, hence the last 3 bits are 0) |
-| 9 | 251 | `\101\011\101` | d6 |
-| 4 + 18*8 = 148 | 399 | `\110\1\Avoids en passant\00000000` : {Avoids en passant} comment
-| 5 | 404 | `\111\1\0` | ends the alternative moves sequence |
-| 9 | 413 |`\101\011\101` | exd6 |
-| 9 | 422 |`\001\011\101` | Qxd6 |
-| 9 | 431 |`\001\101\010` | Qf3 |
-| 9 | 440 |`\010\100\110` | Be7 |
-| 9 | 449 |`\101\011\010` | d3 |
-| 9 | 458 |`\011\101\101` | Nf6 |
-| 9 | 467 |`\010\110\100` | Bg5 |
-| 4 + 31*8 = 252 | 719 | `\110\1Blunder, Qe5+ wins the bishop.\00000000` | {Blunder, Qe5+ wins the bishop.} comment |
-| 6 | 725 | `\110\0\0\0` | O-O |
-| 9 | 734 | `\011\010\010` | Nc3 |
-| 9 | 743 | `\011\011\100` | Nd5 |
-| 9 | 752 | `\010\100\110` | Bxe7 |
-| 9 | 761 | `\011\100\110` | Nxe7 |
-| 6 | 767 | `\110\0\0\1` | O-O-O |
-| 9 | 776 | `\101\000\100` | a5 |
-| 9 | 785 | `\101\000\010` | a3 |
-| 9 | 794 | `\101\000\011` | a4 |
-| 9 | 803 | `\101\001\011` | b4 |
-| 9 | 812 | `\101\001\010` | axb3 |
-| 4 + 14*8 = 116 | 928 | `\110\1En passant !!\00000000` | {En passant !!} comment |
-| 9 | 937 | `\000\011\001` | Kd2 |
-| 9 | 946 | `\101\001\001` | b2 |
-| 9 | 955 | `\100\000\000` | Ra1 |
-| 7 | 962 | `\111\0\00\0` | promotes to a queen in the first square (here, A1) |
-| 13 | 975 | `\110\0\1\00101001` | NAG 41 |
-| 4 + 21*8 = 172 | 1147 | `\110\1Black has the attack\00000000` | {Black has the attack} comment |
-| 9 | 1156 | `\101\000\011` | a4 |
-| 9 | 1165 | `\001\010\010` | Qxc3+ |
-| 9 | 1174 | `\000\010\010` | Kxc3 |
-| 9 | 1183 | `\011\011\100` | Nd5 |
-| 9 | 1192 | `\000\010\011` | Kc4 |
-| 9 | 1201 | `\001\001\011` | Qb4# |
+| 8 | 8 | `\00000000` | Protocol v0 |
+| 4 | 12 | `\0010` | 2 en passant |
+| 1 | 13 | `\1` | 1st en passant has e.p. |
+| 1 | 14 | `\0` | 2nd en passant hasn't e.p. |
+| 5\*8 + 18\*8 = 184 | 198 | `Date\00000000Epoch: 01/01/1970\00000000` | `Date` tag |
+| 8 | 206 | `\00000000`    | NUL byte to end tags |
+| 9 | 215 | `\101\100\011` | e4 |
+| 9 | 224 | `\101\100\101` | e6 |
+| 9 | 233 | `\101\100\100` | e5 |
+| 9 | 242 | `\101\011\100` | d5 |
+| 6 | 248 | `\111\0\1\1` | starts new alternative moves sequence |
+| 4 | 252 | `\0000\ | No en passant in the alternative moves |
+| 9 | 261 | `\101\011\101` | d6 |
+| 5 + 18*8 = 149 | 410 | `\111\0\0\Avoids en passant\00000000` : {Avoids en passant} comment
+| 6 | 416 | `\111\0\1\0` | ends the alternative moves sequence |
+| 9 | 425 |`\101\011\101` | exd6 |
+| 9 | 434 |`\001\011\101` | Qxd6 |
+| 9 | 443 |`\001\101\010` | Qf3 |
+| 9 | 452 |`\010\100\110` | Be7 |
+| 9 | 461 |`\101\011\010` | d3 |
+| 9 | 470 |`\011\101\101` | Nf6 |
+| 9 | 479 |`\010\110\100` | Bg5 |
+| 5 + 31*8 = 253 | 732 | `\111\0\0Blunder, Qe5+ wins the bishop.\00000000` | {Blunder, Qe5+ wins the bishop.} comment |
+| 5 | 737 | `\110\0\0` | O-O |
+| 9 | 746 | `\011\010\010` | Nc3 |
+| 9 | 755 | `\011\011\100` | Nd5 |
+| 9 | 764 | `\010\100\110` | Bxe7 |
+| 9 | 773 | `\011\100\110` | Nxe7 |
+| 5 | 778 | `\110\0\1` | O-O-O |
+| 9 | 787 | `\101\000\100` | a5 |
+| 9 | 796 | `\101\000\010` | a3 |
+| 9 | 805 | `\101\000\011` | a4 |
+| 9 | 814 | `\101\001\011` | b4 |
+| 9 | 823 | `\101\001\010` | axb3 |
+| 5 + 14*8 = 117 | 940 | `\111\0\0En passant !!\00000000` | {En passant !!} comment |
+| 9 | 949 | `\000\011\001` | Kd2 |
+| 9 | 958 | `\101\001\001` | b2 |
+| 9 | 967 | `\100\000\000` | Ra1 |
+| 6 | 973 | `\110\1\00` | promotes to a queen in the first square (here, A1) |
+| 13 | 986 | `\111\1\0\00101001` | NAG 41 |
+| 5 + 21*8 = 173 | 1159 | `\111\0\0Black has the attack\00000000` | {Black has the attack} comment |
+| 9 | 1168 | `\101\000\011` | a4 |
+| 9 | 1177 | `\001\010\010` | Qxc3+ |
+| 9 | 1186 | `\000\010\010` | Kxc3 |
+| 9 | 1195 | `\011\011\100` | Nd5+ |
+| 9 | 1204 | `\000\010\011` | Kc4 |
+| 9 | 1213 | `\001\001\011` | Qb4# |
 
 ## Compression ratio :
 
 The above PGN has 328 bytes / characters (if all the moves are on a single line), thus 328 * 8 = 2624 bits (328 bytes).  
-Then the above table shows the file can be compressed in 1188 bits (148.5 bytes).  
-2624 / 1201 ~= 2.185
-1201 / 2624 ~= 0.4577
-Thus this file is 2.185 times smaller when compressed (compressed size is about 45.77% of the uncompressed size).  
+Then the above table shows the file can be compressed in 1213 bits (151.625 bytes).  
+2624 / 1201 ~= 2.163
+1201 / 2624 ~= 0.4623
+Thus this file is 2.163 times smaller when compressed (compressed size is about 46.23% of the uncompressed size).  
 Take note this ratio might change according to the file content, for instance if there are a bunch of checks, the ratio will increase (i.e. in `Qd2+`, the check is deduced and the `+` isn't encoded).  
 
 # Discontinued ideas
