@@ -607,7 +607,7 @@ As an example, `(23... cxd6 e.p. axb3)` is encoded `\111\0\1\1\0010\10\101\011\1
 - `\111\0\1\1` : starting sequence to introduce alternative moves
 - `\0010` : 2 en passant
 - `\10` : the first one uses e.p. notation, the second doesn't
-- `\101\011\101` : a white pawn moves to d6 (reminder, capture (then en passant) is deduced from the decompresser replaying the game while parsing the file)
+- `\101\011\101` : a white pawn moves to d6 (reminder, capture (then en passant) is deduced from the decompressor replaying the game while parsing the file)
 - `\101\001\011` : a black pawn moves to b3 (same as above, it's up to the decompressor to determine if there's a capture
 - `111\0\1\0` : end of alternative moves
 
@@ -651,7 +651,7 @@ This game is encoded as :
 | 9 | 233 | `\101\100\100` | e5 |
 | 9 | 242 | `\101\011\100` | d5 |
 | 6 | 248 | `\111\0\1\1` | starts new alternative moves sequence |
-| 4 | 252 | `\0000\ | No en passant in the alternative moves |
+| 4 | 252 | `\0000` | No en passant in the alternative moves |
 | 9 | 261 | `\101\011\101` | d6 |
 | 5 + 18*8 = 149 | 410 | `\111\0\0\Avoids en passant\00000000` : {Avoids en passant} comment
 | 6 | 416 | `\111\0\1\0` | ends the alternative moves sequence |
@@ -688,7 +688,7 @@ This game is encoded as :
 | 9 | 1204 | `\000\010\011` | Kc4 |
 | 9 | 1213 | `\001\001\011` | Qb4# |
 
-## Compression ratio :
+## Compression rate :
 
 The above PGN has 328 bytes / characters (if all the moves are on a single line), thus 328 * 8 = 2624 bits (328 bytes).  
 Then the above table shows the file can be compressed in 1213 bits (151.625 bytes).  
@@ -696,6 +696,24 @@ Then the above table shows the file can be compressed in 1213 bits (151.625 byte
 1201 / 2624 ~= 0.4623
 Thus this file is 2.163 times smaller when compressed (compressed size is about 46.23% of the uncompressed size).  
 Take note this ratio might change according to the file content, for instance if there are a bunch of checks, the ratio will increase (i.e. in `Qd2+`, the check is deduced and the `+` isn't encoded).  
+
+## Compression rate - comments
+
+Comments and tags aren't compressed, so the more comments and tags there are in the PGN file, the less efficient the compression will be.  
+
+Here's the above PGN without its comments and tags :
+```r
+1. e4 e6 2. e5 d5 e.p. (2... d6) 3. exd6 Qxd6 4. Qf3 Be7
+5. d3 Nf6 6. Bg5 O-O 7. Nc3 Nd5 8. Bxe7 Nxe7
+9. O-O-O a5 10. a3 a4 11. b4 axb3 12. Kd2 b2
+13. Ra1 bxa1=Q $41 14. a4 Qxc3+ 15. Kxc3 Nd5+ 16. Kc4 Qb4# 0-1
+```
+This PGN file now takes 209 bytes (1672 bits) instead of 328.  
+The compressed size will be 1213 - 184 - 149 - 253 - 117 - 173 = 337 bits (42.125 bytes).  
+1672 / 337 ~= 4.96
+337 / 1672 ~= 0.20
+This compressed PGN takes about 5 times less space than the plain PGN file, so the compression rate is about 20%.  
+It's clearly much better without uncompressed text.  
 
 # Discontinued ideas
 
