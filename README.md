@@ -131,7 +131,7 @@ The first step will be discarding them.
 
 ## Delegating to the decompressor
 
-As we'll see in the following explanation, the decompressor will have to play the moves as it decompressed them.  
+As we'll see in the following explanation, the decompressor will have to play the moves as it decompresses them.  
 It appears some pieces of information aren't strictly necessary and can be retrieved by looking at the board.  
 For instance, when a move gives a check, it's not compressed.  
 Instead, it's up to the decompressor to evaluate each move and then determine if a move puts the opponent's king in check.  
@@ -183,7 +183,7 @@ There are 6 types of material, thus only 3 bits are sufficient to hold them. Thu
 
 Then, the destination square contains a file and a rank.  
 The chess board is 8*8-sized, which is very convenient, as a square can fit in 6 bits (6 bits = 2^6 = 64 values).  
-As an example, the move `Rd2` is compressed as `\100\011\010`, thus 9 bits instead of 24 (`Rd2` is 3 characters, 8 bits each).  
+As an example, the move `Rd2` is compressed as `\100\011\001`, thus 9 bits instead of 24 (`Rd2` is 3 characters, 8 bits each).  
 
 As we said earlier, check(mate) marks (+ and #) aren't compressed, thus remains only how to deal with ambiguous moves.  
 
@@ -224,12 +224,12 @@ As we said earlier, check(mate) marks (+ and #) aren't compressed, thus remains 
     </tr>
 </table>
 
-It means that castling is introduced by `\110\0`, and start of alternative moves by `\111\1`.  
-The following bits will vary according to the action (i.e. castling and start of comments begin with `\110`, but the rest is different).  
+It means that castling is introduced by `\110\0`, and start of alternative moves by `\111\0\1`.  
+The following bits will vary according to the action (i.e. castling and promotion begin with `\110`, but the rest is different).  
 
 ## Avoid using too many bits to lose some unused values
 
-To be as effecient as possible, NAGs will use the same 4 bits as castling.  
+To be as efficient as possible, NAGs will use the same 4 bits as castling.  
 If not, an extra bit would have been needed to represent a move (i.e. determine if it's a promotion, a queen move, or a NAG).  
 It means `Qc7` (a queen move), which is currently introduced by 3 bits, would have needed an extra bit to represent the queen, because of NAGs.  
 Indeed, there are 6 types of material (pawns and 5 kinds of pieces), 4 special "moves" (comments, alternative moves, castling, promotion). If we add NAGs, it is 11, and encoding it on 4 bits leaves 5 unused combinations, thus it's a significant loss. That's why I managed to use the 2 unused combinations (3 bits = 8 combinations - 6 material = 2 unused) for the special moves, and adding to them an extra bit isn't something to be worried about, as they're special they're less likely to happen than regular moves.  
@@ -240,9 +240,8 @@ Moreover, one could argue that comments are alternative moves would be less comm
 
 ## Special move : Castling
 
-Castling is introduced by the 5-bits `\110\0\0` :  
-- `\110` introduces either comment, castling or NAG
-- `\0` introduces either castling or NAG
+Castling is introduced by the 4 bits `\110\0` :  
+- `\110` introduces either castling or promotion
 - `\0` is only for castling
 
 After that, another bit indicates whether we castle kingside or queenside :  
@@ -260,28 +259,31 @@ After that, another bit indicates whether we castle kingside or queenside :
 
 Examples :  
 
-- `O-O` (kingside castling) is encoded as `\110\0\0\0`
-- `O-O-O` (queenside castling) is encoded as `\110\0\0\1`
+- `O-O` (kingside castling) is encoded as `\110\0\0`
+- `O-O-O` (queenside castling) is encoded as `\110\0\1`
 
 Note: There are many syntaxes to represent castling, they're detailed in [Multiple Castling Syntaxes](#multiple-castling-syntaxes) section.
 
 ## NAGs
 
-NAGs are introduced by the 5 bits `\110\0\1` :  
-- `\110` introduces either comment, castling or NAG
-- `\0` introduces either castling or NAG
-- `\1` is only for NAG
+NAGs are introduced by the 5 bits `\111\1\0` :  
+- `\111` introduces either comment, alternative move, NAG or end of the game
+- `\1` introduces either NAG or end of the game
+- `\0` is only for NAG
 
 [NAGs](https://en.wikipedia.org/wiki/Numeric_Annotation_Glyphs) describe the situation for the player (has the advantage, has a good opening, etc..).  
 It uses a dollar sign followed by a number in 0-255, after a move, for instance `36. Re4 $23` means white's 36th move (rook to e4) puts black in zugzwang.  
-They don't seem to be often used (see [here](https://chess.stackexchange.com/questions/27834/does-anything-actually-use-numeric-annotation-glyphs-nags)), and about half of their possible values are not defined (see wikipedia link), thus each site implements them as they want.  
+They don't seem to be often used (see [here](https://chess.stackexchange.com/questions/27834/does-anything-actually-use-numeric-annotation-glyphs-nags)), and about half of their possible values are not defined (see Wikipedia link), thus each site implements them as they want.  
 As there are 256 values, they always will be encoded in a single byte, thus `$23` will become `\110\0\1\00010111` :
-- `\110\0\1` : 5 introduction bits (see at the beginning of this section)
+- `\111\1\0` : 5 introduction bits (see at the beginning of this section)
 - `\00010111` : 23 in binary
 
 ## Special move : Promotion
 
-Promotion begins with 3-bits `\111`, followed by a single bit `\0`, if this bit is 1 it's not promotion !  
+Promotion begins with 4 bits `\110\1` :  
+- `\110` introduces either castling or promotion
+- `\1` is only for promotion
+
 After that come 2 bits to represent the piece in which the pawn promotes into :  
 
 <table>
@@ -321,13 +323,13 @@ This index is a zero-based value which is 0 if the promoted pawn is the closest 
 As an example, let there are pawns on A7 and C7. If the first one (A7) is promoted, then its index is 0, otherwise it's 1 (as it's the second one).  
 The rank (line) doesn't need to be encoded, as we know which player did the promotion, hence the decompressor will deduce it.  
 
-As an example, `e8=Q` (there's only one pawn on the 7th rank) is encoded as `\111\0\01` :
+As an example, `e8=Q` (there's only one pawn on the 7th rank) is encoded as `\110\1\01` :
 
-- `\111\0` = promotion
+- `\110\1` = promotion
 - `\00` = queen
 - no index, only one pawn
 
-The same move `e8=Q` is then encoded `\111\0\00\1` if there's a pawn on B7, as this one can also promote.  
+The same move `e8=Q` is then encoded `\110\1\00\1` if there's a pawn on B7, as this one can also promote.  
 
 Ambiguous promotion :  
 <img src="doc_assets/promotion_3_ways.png">  
@@ -342,15 +344,15 @@ Here the pawn still has two choices, push or capture, then two possible moves.
 Then, if the decompressor detects a situation like that (multiple destination squares to be promoted), 1-2 extra bit(s) will be added to store their zero-based file index (0 = smallest = closest to A, 1-2 = more to the right).  
 
 As an instance, here's `axb1=Q` compressed :
-- `\111\0\00\` : promotion to queen
+- `\110\1\00\` : promotion to queen
 - `\1` : 2 choices (A1 and B1), chose B1 (B > A)
 
 On the other hand, `a1=Q` is encoded as :  
-- `\111\0\00` : promotion to queen
+- `\110\1\00` : promotion to queen
 - `\0` : A < B, first choice
 
 Lastly, here's `bxc1=Q` from the penultimate example (with 3 ways to promote) :
-- `\111\0\00` : promotion to queen
+- `\110\1\00` : promotion to queen
 - `\10` : 3rd choice (landing on C file), as there's also A and B
 
 ## Special move : [(google) en passant](https://knowyourmeme.com/memes/en-passant-google-en-passant) <a id="en-passant"></a>
@@ -555,15 +557,17 @@ We can easily notice that there cannot be any ambiguity, as :
 A comment may contain relevant information about the game or the move its next to, often the name of the opening if placed in the first moves.  
 As stated above, comments are text inside curly brackets {}, like `{This opening is called the Ruy Lopez.}` for instance.  
 They can be placed right next to a move (i.e. anywhere but between tags).  
-Each comment is introduced by the 4 bits `\110\1` (as `\110`  is also used for castling and NAGs, it's mandatory to add an extra bit `\1`).  
+Each comment is introduced by the 5 bits `\111\0\0` :
+- `\111` is either for comment, alternative move, NAG or enf of the game
+- `\0` is for comment or alternative move
+- `\0` is only for comment
 Then, the text is copied as it is in the PGN, and a NUL ASCII character `\00000000` is appended to end the comment.  
 
 Examples :  
 
 `{This opening is called the Ruy Lopez.}` is encoded as `\110\1\This opening is called the Ruy Lopez.\00000000` :  
 
-- `\110` = comment or castling
-- `\1` = comment
+- `\111\0\0` = comment
 - `This opening is called the Ruy Lopez.` = text
 - `\00000000` = NUL character to end text and comment
 
@@ -578,7 +582,11 @@ Here, the parenthesis contains a better move than the one Black played.
 1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 (3... g6) 4. Qxf7# 1-0
 ```
 
-Alternative moves are introduced by 3 bits `\111`, followed by bit `\1` (as `\111\0` is used for promotion).  
+Alternative moves are introduced by 5 bits `\111\0\1` :
+- `\111` is for either comment, alternative moves, NAG or end of the game
+- `\0` introduces either comment or alternative moves
+- `\1` is for alternative moves only
+
 In order to support nested alternative moves, there is an extra bit to read.  
 These moves are parsed and stored with a stack :
 - `\1` is to start a new alternative moves section
@@ -587,20 +595,21 @@ These moves are parsed and stored with a stack :
 As an example, the above excerpt is encoded as :
 - `\010\010\011` : Bc4
 - `\011\101\101` : Nf6
-- `\111\1\1` : `\111\1` for alternative moves, `\1` to begin
+- `\111\0\1\1` : `\111\0\1` for alternative moves, `\1` to begin
 - `\101\110\101` : g6
 - `\101\111\010` : h3
-- `\111\1\0` : end of alternative moves
+- `\111\0\1\0` : end of alternative moves
 
 There's one thing left, there can be en passant in alternative moves, and then the writing method (e.p. suffix vs no suffix) must be stored.  
 The exact same process will be used, meaning each alternative moves sequence will begin by a block representing en passant, as described in [en passant section](#en-passant).  
 
-As an example, `(23... cxd6 e.p. axb3)` is encoded `\111\1\0010\10\101\011\101\101\001\011` (assuming there's only one pawn which can en passant at the same time, otherwise disambiguation would be needed) :  
-- `\111\1` : starting sequence to introduce alternative moves
+As an example, `(23... cxd6 e.p. axb3)` is encoded `\111\0\1\1\0010\10\101\011\101\101\001\011\111\0\1\0` (assuming there's only one pawn which can en passant at the same time, otherwise disambiguation would be needed) :  
+- `\111\0\1\1` : starting sequence to introduce alternative moves
 - `\0010` : 2 en passant
 - `\10` : the first one uses e.p. notation, the second doesn't
-- `\101\011\101` : a white pawn moves to d6 (reminder, capture (then en passant) is deduced from the decompiler replaying the game while parsing the file)
-- `\101\001\011` : a black pawn moves to b3 (same as above, it's up to the decompressor to determine if there's a capture)
+- `\101\011\101` : a white pawn moves to d6 (reminder, capture (then en passant) is deduced from the decompresser replaying the game while parsing the file)
+- `\101\001\011` : a black pawn moves to b3 (same as above, it's up to the decompressor to determine if there's a capture
+- `111\0\1\0` : end of alternative moves
 
 ## Version
 
