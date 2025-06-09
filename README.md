@@ -620,8 +620,8 @@ The version number allows the decompressor to identify which is the protocol ver
 ## Compression order
 ```mermaid
 graph TD
-    A[Version number] --> B[En passant];
-    B --> C[Tags];
+    A[Version number] --> B[Tags];
+    B --> C[En passant];
     C --> D[Moves];
     D --> E["End of the game (if needed)"];
 ```
@@ -641,11 +641,11 @@ This game is encoded as :
 | Bits | Sum | Compressed | Description |
 | ---- | --- | ---------- | ----------- |
 | 8 | 8 | `\00000000` | Protocol v0 |
-| 4 | 12 | `\0010` | 2 en passant |
-| 1 | 13 | `\1` | 1st en passant has e.p. |
-| 1 | 14 | `\0` | 2nd en passant hasn't e.p. |
-| 5\*8 + 18\*8 = 184 | 198 | `Date\00000000Epoch: 01/01/1970\00000000` | `Date` tag |
-| 8 | 206 | `\00000000`    | NUL byte to end tags |
+| 5\*8 + 18\*8 = 184 | 192 | `Date\00000000Epoch: 01/01/1970\00000000` | `Date` tag |
+| 8 | 200 | `\00000000`    | NUL byte to end tags |
+| 4 | 204 | `\0010` | 2 en passant |
+| 1 | 205 | `\1` | 1st en passant has e.p. |
+| 1 | 206 | `\0` | 2nd en passant hasn't e.p. |
 | 9 | 215 | `\101\100\011` | e4 |
 | 9 | 224 | `\101\100\101` | e6 |
 | 9 | 233 | `\101\100\100` | e5 |
@@ -653,7 +653,7 @@ This game is encoded as :
 | 6 | 248 | `\111\0\1\1` | starts new alternative moves sequence |
 | 4 | 252 | `\0000` | No en passant in the alternative moves |
 | 9 | 261 | `\101\011\101` | d6 |
-| 5 + 18*8 = 149 | 410 | `\111\0\0\Avoids en passant\00000000` : {Avoids en passant} comment
+| 5 + 18*8 = 149 | 410 | `\111\0\0\Avoids en passant\00000000` | {Avoids en passant} comment
 | 6 | 416 | `\111\0\1\0` | ends the alternative moves sequence |
 | 9 | 425 |`\101\011\101` | exd6 |
 | 9 | 434 |`\001\011\101` | Qxd6 |
@@ -710,8 +710,8 @@ Here's the above PGN without its comments and tags :
 ```
 This PGN file now takes 209 bytes (1672 bits) instead of 328.  
 The compressed size will be 1213 - 184 - 149 - 253 - 117 - 173 = 337 bits (42.125 bytes).  
-1672 / 337 ~= 4.96
-337 / 1672 ~= 0.20
+1672 / 337 ~= 4.96  
+337 / 1672 ~= 0.20  
 This compressed PGN takes about 5 times less space than the plain PGN file, so the compression rate is about 20%.  
 It's clearly much better without uncompressed text.  
 
