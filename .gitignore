@@ -1,3 +1,8 @@
 .vscode/
-obj/
+*.o
 pgn_compressor
+pgn_compressor.exe
+tests/test
+*gdb*
+*.d
+TODO.txt
