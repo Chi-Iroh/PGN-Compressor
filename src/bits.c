@@ -33,6 +33,16 @@ bool read_n_bits(struct compressed_buf* buf, uint8_t n_bits, uint8_t* n) {
     if (!peek_n_bits(buf, n_bits, n)) {
         return false;
     }
+
+    // char bits[9] = { 0 };
+    // for (uint8_t nth = 7; ; nth--) {
+        // bits[7 - nth] = "01"[(*n >> nth) & 1];
+        // if (nth == 0) {
+            // break;
+        // }
+    // }
+    // LOG("Read %" PRIu8 " bits: %s at %zuth byte, %hhuth bit", n_bits, bits + 8 - n_bits, buf->nth_byte, buf->nth_bit);
+
     buf->nth_bit += n_bits;
     if (buf->nth_bit >= 8) {
         buf->nth_bit -= 8;

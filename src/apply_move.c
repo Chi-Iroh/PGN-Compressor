@@ -1,5 +1,10 @@
+#include <memory.h>
+
 #include "../include/apply_move.h"
+#include "../include/debug.h"
 #include "../include/king.h"
+#include "../include/log.h"
+#include "../include/source_location.h"
 
 void move_piece(board board, const struct coord* from, const struct coord* to) {
     struct piece* const board_from = board_at_coord(board, *from);
@@ -20,7 +25,7 @@ void apply_move_impl(const struct pgn_token* token, board board) {
     move_piece(board, &token->move.move.from, &token->move.move.to);
 }
 
-void apply_move(const struct pgn_token* token, board board) {
+void apply_move_on_raw_board(const struct pgn_token* token, board board) {
     switch (token->type) {
         case MOVE_BISHOP:
         case MOVE_KING:
@@ -38,4 +43,13 @@ void apply_move(const struct pgn_token* token, board board) {
         default:
             return;
     }
+}
+
+void apply_move(const struct pgn_token* token, struct board_state* state) {
+    memcpy(state->previous_board, state->board, sizeof(board));
+    LOG_FROM(LOC_HERE, "Saving board :");
+    print_board(state->previous_board);
+    apply_move_on_raw_board(token, state->board);
+    LOG_FROM(LOC_HERE, "Board after move :");
+    print_board(state->board);
 }

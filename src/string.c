@@ -1,5 +1,4 @@
 #include <stdbool.h>
-#include <stdbit.h>
 #include <stdlib.h>
 #include <string.h>
 #include "../include/error.h"

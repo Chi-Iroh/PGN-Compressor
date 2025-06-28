@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "bits_constants.h"
+#include "stack.h"
 
 #define BOARD_SIZE 8
 
@@ -136,25 +137,35 @@ struct pgn_token {
         uint8_t nag;
         char* comment;
         struct winner winner;
-        struct {
-            struct pgn_token* tokens;
-            size_t size;
-            size_t max_size;
-        } alternative_moves;
+        bool alternative_moves_is_end; // false = beginning of alternative moves
     } move;
 };
 
 typedef struct piece board[BOARD_SIZE][BOARD_SIZE];
 
-struct board_state {
+struct previous_board_state {
     enum player current_player;
     unsigned move_turn;
     board board;
 };
 
+STACK_STRUCT_WITH_NAME(struct previous_board_state, previous_board_state)
+
+struct board_state {
+    enum player current_player;
+    unsigned move_turn;
+    board board;
+    board previous_board;
+    struct stack_previous_board_state previous_states; // previous states, before alternative moves
+};
+
 struct board_state empty_board_state(void);
+void free_board_state(struct board_state* state);
 void next_turn(struct board_state* state);
 // bool apply_move(struct board_state* state, const struct move* move);
+
+bool board_start_alternative_moves(struct board_state* state);
+bool board_end_alternative_moves(struct board_state* state);
 
 // ----------------------------------------------------------------------------
 

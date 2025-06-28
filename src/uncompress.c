@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -8,6 +9,7 @@
 #include "../include/apply_move.h"
 #include "../include/array.h"
 #include "../include/bits.h"
+#include "../include/debug.h"
 #include "../include/error.h"
 #include "../include/king.h"
 #include "../include/log.h"
@@ -16,14 +18,6 @@
 #include "../include/safe_bool.h"
 #include "../include/source_location.h"
 #include "../include/uncompress.h"
-
-#define MAX_EN_PASSANT 8
-#define N_EN_PASSANT_BITS 4 // 0 min to 8 en passant max, thus 9 possibilities = 4 bits
-
-struct en_passant_header {
-    uint8_t n_en_passant : N_EN_PASSANT_BITS;
-    bool has_en_passant_extra_ep_notation[MAX_EN_PASSANT];
-};
 
 static bool parse_en_passant_header(struct compressed_buf* buf, struct en_passant_header* header) {
     ASSERT_PRINTF(buf != NULL, "Compressed buffer is NULL !");
@@ -136,101 +130,6 @@ void free_tags(struct tag** tags, size_t* n_tags, size_t* max_tags) {
     *tags = NULL;
     *n_tags = 0;
     *max_tags = 0;
-}
-
-const char* token_string[] = {
-    [MOVE_KING] = "king move",
-    [MOVE_QUEEN] = "queen move",
-    [MOVE_BISHOP] = "bishop move",
-    [MOVE_KNIGHT] = "knight move",
-    [MOVE_ROOK] = "rook move",
-    [MOVE_PAWN] = "pawn move",
-    [CASTLING_OR_PROMOTION] = "castling / promotion",
-    [CASTLING] = "castling",
-    [PROMOTION] = "promotion",
-    [COMMENT_OR_ALTERNATIVE_MOVE_OR_NAG_OR_END_OF_GAME] = "comment / alternative move / NAG / end of the game",
-    [COMMENT_OR_ALTERNATIVE_MOVE] = "comment / alternative move",
-    [NAG_OR_END_OF_THE_GAME] = "NAG / end of the game",
-    [COMMENT] = "comment",
-    [ALTERNATIVE_MOVE] = "alternative move",
-    [NAG] = "NAG",
-    [END_OF_THE_GAME] = "end of the game"
-};
-
-const char PIECE_CHAR[] = {
-    [KING] = 'K',
-    [KNIGHT] = 'N',
-    [ROOK] = 'R',
-    [BISHOP] = 'B',
-    [QUEEN] = 'Q'
-};
-
-const char FILE_NAMES[BOARD_SIZE + 1] = "abcdefgh";
-const char* CHECK_STRING[] = {
-    [NO_CHECK] = "",
-    [CHECK] = "+",
-    [CHECKMATE] = "#"
-};
-
-static void print_move(const struct move* move, FILE* file) {
-    LOG("%d", move->piece);
-    if (move->piece == KING && move->extra_infos.infos.king_infos.is_castling) {
-        fputs(move->extra_infos.infos.king_infos.castling == KINGSIDE ? "O-O\n" : "O-O-O\n", file);
-        return;
-    }
-
-    if (move->piece != PAWN) {
-        fputc(PIECE_CHAR[move->piece], file);
-    }
-    if (move->capture) {
-        fputc('x', file);
-    }
-    fputc(FILE_NAMES[move->to.file], file);
-    fprintf(file, "%hhu", move->to.rank + 1);
-    if (move->piece == PAWN && move->extra_infos.infos.pawn_infos.promoted) {
-        fputc('=', file);
-        fputc(PIECE_CHAR[move->extra_infos.infos.pawn_infos.promotion_piece], file);
-    }
-    fputs(CHECK_STRING[move->check], file);
-    if (move->piece == PAWN && move->extra_infos.infos.pawn_infos.en_passant && move->extra_infos.infos.pawn_infos.has_en_passant_extra_ep_notation) {
-        fputs(" e.p.", file);
-    }
-    fputc('\n', file);
-}
-
-static void print_pgn_token(struct pgn_token* token, FILE* file) {
-    ASSERT_PRINTF_RETURN(token != NULL, "PGN token to print is NULL !");
-    ASSERT_PRINTF_RETURN(file != NULL, "Output file is NULL !");
-
-    switch (token->type) {
-    case CASTLING:
-        fprintf(file, "{%s}", token->move.comment);
-        break;
-
-    case NAG:
-        fprintf(file, "$%" PRIu8, token->move.nag);
-        break;
-
-    case CASTLING_OR_PROMOTION:
-    case COMMENT_OR_ALTERNATIVE_MOVE_OR_NAG_OR_END_OF_GAME:
-    case COMMENT_OR_ALTERNATIVE_MOVE:
-    case NAG_OR_END_OF_THE_GAME:
-        fprintf(stderr, "Cannot print ambiguous token ! Got '%s' !\n", token_string[token->type]);
-        break;
-
-    case ALTERNATIVE_MOVE:
-        ASSERT_PRINTF_RETURN(token->move.alternative_moves.size > 0, "Empty alternative moves sequence !");
-        fputc('(', file);
-        for (size_t i = 0; i < token->move.alternative_moves.size; i++) {
-            print_pgn_token(token->move.alternative_moves.tokens + i, file);
-        }
-        fputc(')', file);
-        break;
-
-    default:
-        print_move(&token->move.move, file);
-        break;
-    }
 }
 
 static bool parse_castling(struct compressed_buf* buf, struct board_state* state, struct pgn_token* token) {
@@ -383,7 +282,7 @@ static bool parse_promotion(struct compressed_buf* buf, struct board_state* stat
 
 static enum safe_bool parse_move(struct compressed_buf* buf, struct board_state* state, struct pgn_token* token);
 
-static bool parse_alternative_moves_impl(struct compressed_buf* buf, struct board_state* state, struct pgn_token* token, unsigned nesting_level) {
+static bool parse_alternative_moves(struct compressed_buf* buf, struct board_state* state, struct pgn_token* token) {
     ASSERT_PRINTF(buf != NULL, "Compressed buffer is NULL !");
     ASSERT_PRINTF(state != NULL, "Board state is NULL !");
     ASSERT_PRINTF(token != NULL, "PGN token is NULL !");
@@ -392,25 +291,22 @@ static bool parse_alternative_moves_impl(struct compressed_buf* buf, struct boar
     if (!read_n_bits(buf, 1, &extra_bit)) {
         return false;
     }
-    if (extra_bit == 0 && nesting_level == 0) {
-        fprintf(stderr, "Attempt to end an alternative moves section, but none was opened !\n");
-        return false;
-    } else if (extra_bit == 0) {
-        nesting_level--;
-        return true;
+    if (extra_bit == 0) {
+        LOG_FROM(LOC_HERE, "End of alternative moves");
+        return board_end_alternative_moves(state);
     }
-    nesting_level++;
+    LOG_FROM(LOC_HERE, "Beginning of alternative moves");
+    ASSERT_PRINTF_EXIT_FAILURE(board_start_alternative_moves(state), "Cannot start alternative moves sequence !");
+    LOG("Previous board :");
+    print_board(state->board);
     while (true) {
         if (parse_move(buf, state, token) != TRUE) {
-            nesting_level--;
             return false;
+        } else if (token->type == ALTERNATIVE_MOVE && token->move.alternative_moves_is_end) {
+            break;
         }
     }
     return true;
-}
-
-static bool parse_alternative_moves(struct compressed_buf* buf, struct board_state* state, struct pgn_token* token) {
-    return parse_alternative_moves_impl(buf, state, token, 0);
 }
 
 static bool parse_move_impl(struct compressed_buf* buf, struct board_state* state, struct pgn_token* token) {
@@ -421,11 +317,16 @@ static bool parse_move_impl(struct compressed_buf* buf, struct board_state* stat
     token->move.move.to.file = file;
     token->move.move.to.rank = rank;
     token->move.move.capture = board_at_coord(state->board, token->move.move.to)->type != EMPTY_SQUARE;
-    LOG("%d", token->move.move.piece);
+    LOG("A %s %s (%d) is moving", (state->current_player == WHITE ? "white" : "black"), PIECES_NAME[token->move.move.piece], token->move.move.piece);
+    LOG("file: %c (raw: %d) // rank: %d (raw: %d)\n", 'a' + file, file, 1 + rank, rank);
 
     struct coord coords[8];
     const uint8_t count = count_how_many_pieces_of_same_type_can_move_to_square(state->board, state->current_player, token->move.move.piece, &token->move.move.to, coords);
     LOG("%hhu piece%s can move to the square %c%hhu\n", count, count >= 2 ? "s" : "", 'a' + token->move.move.to.file, 1 + token->move.move.to.rank);
+    if (count == 0) {
+        print_board(state->board);
+    }
+
     struct coord* coord = &coords[0];
 
     if (count > 1) {
@@ -441,7 +342,7 @@ static bool parse_move_impl(struct compressed_buf* buf, struct board_state* stat
     // we must apply the move before calling is_player_checked, but we do it on a temp board, as the move is applied in the main uncompressing loop
     board copy;
     memcpy(copy, state->board, sizeof(board));
-    apply_move(token, copy);
+    apply_move_on_raw_board(token, copy);
     token->move.move.check = is_player_checked(copy, opponent_player(state->current_player), true);
     return true;
 }
@@ -505,87 +406,12 @@ static enum safe_bool parse_move(struct compressed_buf* buf, struct board_state*
     FAIL("Invalid bits !");
 }
 
-void debug_print(struct en_passant_header* en_passant_header, struct tag* tags, size_t n_tags) {
-    ASSERT_PRINTF_RETURN(en_passant_header != NULL, "En passant header is NULL !");
-
-    printf(
-        "En passant header :\n"
-        "- %u en passant\n",
-        en_passant_header->n_en_passant
-    );
-    for (uint8_t i = 0; i < en_passant_header->n_en_passant; i++) {
-        printf("- En passant n°%" PRIu8 " %s extra e.p. notation\n", i, en_passant_header->has_en_passant_extra_ep_notation[i] ? "has" : "has not");
-    }
-
-    printf("\n%zu tag%s%s\n", n_tags, n_tags > 1 ? "s" : "", n_tags > 0 ? " :" : "");
-    for (size_t i = 0; tags != NULL && i < n_tags; i++) {
-        printf("- '%s' : '%s'\n", tags[i].name, tags[i].value);
-    }
-}
-
 void free_token(struct pgn_token* token) {
     if (token == NULL) {
         return;
     }
-    if (token->type == CASTLING) {
+    if (token->type == COMMENT) {
         free(token->move.comment);
-    }
-}
-
-void print_token(const struct pgn_token* token) {
-    switch (token->type) {
-    case PROMOTION:
-        puts("Promotion");
-        goto print_move;
-
-    case CASTLING:
-        puts("Castling");
-        goto print_move;
-
-    print_move:
-    case MOVE_KING:
-    case MOVE_QUEEN:
-    case MOVE_BISHOP:
-    case MOVE_KNIGHT:
-    case MOVE_ROOK:
-    case MOVE_PAWN:
-        print_move(&token->move.move, stdout);
-        break;
-
-    case COMMENT:
-        printf("Comment '%s'\n", token->move.comment);
-        break;
-
-    case NAG:
-        printf("NAG %hhu\n", token->move.nag);
-        break;
-
-    case CASTLING_OR_PROMOTION:
-        puts("Castling / promotion");
-        break;
-
-    case COMMENT_OR_ALTERNATIVE_MOVE_OR_NAG_OR_END_OF_GAME:
-        puts("Comment / alternative move / NAG / end of the game");
-        break;
-
-    case COMMENT_OR_ALTERNATIVE_MOVE:
-        puts("Comment / alternative move");
-        break;
-
-    case NAG_OR_END_OF_THE_GAME:
-        puts("NAG / end of the game");
-
-    case ALTERNATIVE_MOVE:
-        printf("Alternative move%s :\n", token->move.alternative_moves.size >= 2 ? "s" : "");
-        for (size_t i = 0; i < token->move.alternative_moves.size; i++) {
-            print_token(token->move.alternative_moves.tokens + i);
-        }
-        puts("--");
-        break;
-
-    case END_OF_THE_GAME:
-        puts("End of the game");
-        break;
     }
 }
 
@@ -640,7 +466,7 @@ int uncompress(const struct args* args) {
         if (token.type == END_OF_THE_GAME) {
             break;
         }
-        apply_move(&token, board_state.board);
+        apply_move(&token, &board_state);
         next_turn(&board_state);
         has_moves = true;
     }
@@ -648,6 +474,7 @@ int uncompress(const struct args* args) {
         status = false;
     }
 
+    free_board_state(&board_state);
     free_token(has_moves ? &token : NULL);
     free_tags(&tags, &n_tags, &max_tags);
     free(raw_buf);

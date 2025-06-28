@@ -1,3 +1,4 @@
+SHELL = /bin/bash
 SRC_NO_MAIN	=	$(shell find src/ -type f -name "*.c" -not -name "main.c")
 SRC 	=	$(SRC_NO_MAIN) src/main.c
 OBJ_NO_MAIN	=	$(patsubst src/%,obj/%,$(SRC_NO_MAIN:.c=.o))

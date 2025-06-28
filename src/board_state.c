@@ -1,3 +1,5 @@
+#include <memory.h>
+
 #include "../include/error.h"
 #include "../include/piece.h"
 
@@ -7,6 +9,8 @@
 #include "../include/pawn.h"
 #include "../include/queen.h"
 #include "../include/rook.h"
+
+STACK_IMPL_WITH_NAME(struct previous_board_state, previous_board_state, ({ .current_player = INVALID_PLAYER, .move_turn = 0, .board = {{ 0 }} }))
 
 struct board_state empty_board_state(void) {
     struct board_state state = {
@@ -38,7 +42,13 @@ struct board_state empty_board_state(void) {
             }
         }
     }
+    state.previous_states = stack_previous_board_state_empty();
+    memcpy(state.previous_board, state.board, sizeof(board));
     return state;
+}
+
+void free_board_state(struct board_state* state) {
+    stack_previous_board_state_free(&state->previous_states);
 }
 
 void next_turn(struct board_state* state) {
@@ -50,6 +60,41 @@ void next_turn(struct board_state* state) {
             state->current_player = BLACK;
         }
     }
+}
+
+bool board_start_alternative_moves(struct board_state* state) {
+    ASSERT_PRINTF_RETURN_FALSE(!(state->move_turn == 0 && state->current_player == WHITE), "Cannot start an alternative moves sequence it no move was played !");
+
+    struct previous_board_state prev_state = {
+        .move_turn = state->move_turn,
+        .current_player = state->current_player
+    };
+    memcpy(prev_state.board, state->board, sizeof(board));
+
+    board prev_board;
+    memcpy(prev_board, state->previous_board, sizeof(board));
+    memcpy(state->previous_board, state->board, sizeof(board));
+    memcpy(state->board, prev_board, sizeof(board));
+
+    if (state->current_player == WHITE) { // if white must play at the nth turn, then the last move was a previous turn
+        state->move_turn--;
+    }
+    state->current_player = opponent_player(state->current_player);
+
+    return stack_previous_board_state_push(&state->previous_states, prev_state);
+}
+
+bool board_end_alternative_moves(struct board_state* state) {
+    ASSERT_PRINTF_RETURN_FALSE(state->previous_states.size > 0, "No current alternative moves sequence !");
+
+    struct previous_board_state prev_state;
+    if (!stack_previous_board_state_pop(&state->previous_states, &prev_state)) {
+        return false;
+    }
+    state->move_turn = prev_state.move_turn;
+    state->current_player = prev_state.current_player;
+    memcpy(state->board, prev_state.board, sizeof(board));
+    return true;
 }
 
 const char* PLAYER_NAMES[PLAYER_SIZE] = {
