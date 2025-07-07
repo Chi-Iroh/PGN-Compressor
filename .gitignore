@@ -6,3 +6,4 @@ tests/test
 *gdb*
 *.d
 TODO.txt
+*.log
