@@ -19,12 +19,12 @@ struct piece* board_at_coord(board board, struct coord coord) {
 }
 
 struct piece* board_at(board board, int file, int rank) {
-    ASSERT_PRINTF(file >= 0 && file <= 7, "Invalid file, must be between 0 and 7, but is %d instead !", file);
+    ASSERT_PRINTF_TRAP(file >= 0 && file <= 7, "Invalid file, must be between 0 and 7, but is %d instead !", file);
     ASSERT_PRINTF(rank >= 0 && rank <= 7, "Invalid rank, must be between 0 and 7, but is %d instead !", rank);
     return &board[rank][file];
 }
 
-bool (*const can_move_to[])(struct coord from, struct coord to, enum player moving_player, board board) = {
+bool (*const can_move_to[])(struct coord from, struct coord to, enum player moving_player, struct board_state* state) = {
     [BISHOP] = can_bishop_move_to,
     [KNIGHT] = can_knight_move_to,
     [PAWN] = can_pawn_move_to,
@@ -32,19 +32,19 @@ bool (*const can_move_to[])(struct coord from, struct coord to, enum player movi
     [ROOK] = can_rook_move_to
 };
 
-bool is_square_attacked_by(board board, const struct coord coord, enum player attacker, bool if_opponent_king_can_attack_then_check_if_square_safe) {
+bool is_square_attacked_by(struct board_state* state, const struct coord coord, enum player attacker, bool if_opponent_king_can_attack_then_check_if_square_safe) {
     for (size_t rank_index = 0; rank_index < BOARD_SIZE; rank_index++) {
         for (size_t file_index = 0; file_index < BOARD_SIZE; file_index++) {
             const struct coord from = { .file = file_index, .rank = rank_index };
-            const struct piece square = *board_at_coord(board, from);
+            const struct piece square = *board_at_coord(state->board, from);
             if (square.player == attacker && square.type != EMPTY_SQUARE) {
                 if (square.type == KING) {
-                    const bool is_attacked = can_king_move_to(from, coord, attacker, board, if_opponent_king_can_attack_then_check_if_square_safe);
+                    const bool is_attacked = can_king_move_to(from, coord, attacker, state, if_opponent_king_can_attack_then_check_if_square_safe);
                     if (is_attacked) {
                         return true;
                     }
                 } else {
-                    const bool is_attacked = can_move_to[square.type](from, coord, attacker, board);
+                    const bool is_attacked = can_move_to[square.type](from, coord, attacker, state);
                     if (is_attacked) {
                         return true;
                     }
@@ -165,10 +165,23 @@ static uint8_t how_many_pieces_at_most_could_theoretically_move_to_square(struct
     case EMPTY_SQUARE:
         FAIL("piece was an empty square !");
         return 0;
+
+    default:
+        FAIL("Invalid piece: %d", piece);
+        return 0;
     }
 }
 
-uint8_t count_how_many_pieces_of_same_type_can_move_to_square(board board, enum player player, enum piece_type piece, struct coord* to, struct coord coords[MAX_PIECES_TO_GO_TO_SAME_SQUARE]) {
+uint8_t count_how_many_pieces_of_same_type_can_move_to_square(struct board_state* state, enum player player, enum piece_type piece, struct coord* to, struct coord coords[MAX_PIECES_TO_GO_TO_SAME_SQUARE]) {
+    if (piece == KING) {
+        const struct coord king = find_king(state->board, state->current_player);
+        if (can_king_move_to(king, *to, state->current_player, state, true)) {
+            coords[0] = king;
+            return 1;
+        }
+        return 0;
+    }
+
     uint8_t count = 0;
     for (int rank = 0; rank < BOARD_SIZE; rank++) {
         for (int file = 0; file < BOARD_SIZE; file++) {
@@ -176,9 +189,9 @@ uint8_t count_how_many_pieces_of_same_type_can_move_to_square(board board, enum 
                 .file = file,
                 .rank = rank
             };
-            struct piece* const _piece = board_at(board, file, rank);
+            struct piece* const _piece = board_at(state->board, file, rank);
             if (_piece->player == player && _piece->type == piece) {
-                if (can_move_to[_piece->type](from, *to, player, board)) {
+                if (can_move_to[_piece->type](from, *to, player, state)) {
                     coords[count++] = from;
                     LOG("%c%hhu can go to %c%hhu\n", 'a' + from.file, 1 + from.rank, 'a' + to->file, 1 + to->rank);
                 }
@@ -190,8 +203,8 @@ uint8_t count_how_many_pieces_of_same_type_can_move_to_square(board board, enum 
 
 #define MAX_SQUARES_PER_PIECE_MOVE 27 // A piece can move to at most 27 squares, a queen in D4/D5/E4/E5 can move to at most 27 squares
 
-static void list_all_possible_moves_for_a_piece(board board, struct coord piece_coord, struct coord possible_moves[MAX_SQUARES_PER_PIECE_MOVE], uint8_t* n_possible_moves) {
-    const struct piece piece = *board_at_coord(board, piece_coord);
+static void list_all_possible_moves_for_a_piece(struct board_state* state, struct coord piece_coord, struct coord possible_moves[MAX_SQUARES_PER_PIECE_MOVE], uint8_t* n_possible_moves) {
+    const struct piece piece = *board_at_coord(state->board, piece_coord);
     *n_possible_moves = 0;
 
     if (piece.type == EMPTY_SQUARE) {
@@ -204,10 +217,10 @@ static void list_all_possible_moves_for_a_piece(board board, struct coord piece_
             if (are_coords_equal(&coord, &piece_coord)) {
                 continue;
             } else if (piece.type == KING) {
-                if (!can_king_move_to(piece_coord, coord, piece.player, board, true)) {
+                if (!can_king_move_to(piece_coord, coord, piece.player, state, true)) {
                     continue;
                 }
-            } else if (!can_move_to[piece.type](piece_coord, coord, piece.player, board)) {
+            } else if (!can_move_to[piece.type](piece_coord, coord, piece.player, state)) {
                 continue;
             }
             possible_moves[(*n_possible_moves)++] = coord;
@@ -215,12 +228,12 @@ static void list_all_possible_moves_for_a_piece(board board, struct coord piece_
     }
 }
 
-static bool can_player_escape_check(board _board, enum player checked_player) {
+static bool can_player_escape_check(struct board_state* state, enum player checked_player) {
     struct coord coord = { .file = 0, .rank = 0 };
 
     for (; coord.rank < BOARD_SIZE; coord.rank++) {
         for (coord.file = 0; coord.file < BOARD_SIZE; coord.file++) {
-            const struct piece* const piece = board_at_coord(_board, coord);
+            const struct piece* const piece = board_at_coord(state->board, coord);
             if (piece->type == EMPTY_SQUARE) { // empty squares are useless to escape check
                 continue;
             } else if (piece->player != checked_player) { // ignoring pieces of the opponent player
@@ -229,13 +242,12 @@ static bool can_player_escape_check(board _board, enum player checked_player) {
 
             struct coord possible_moves[MAX_SQUARES_PER_PIECE_MOVE];
             uint8_t n_possible_moves;
-            list_all_possible_moves_for_a_piece(_board, coord, possible_moves, &n_possible_moves);
+            list_all_possible_moves_for_a_piece(state, coord, possible_moves, &n_possible_moves);
 
             for (uint8_t i = 0; i < n_possible_moves; i++) {
-                board copy;
-                memcpy(copy, _board, sizeof(board));
-                move_piece(copy, &coord, &possible_moves[i]);
-                if (is_player_checked(copy, checked_player, false) == NO_CHECK) {
+                struct board_state copy = copy_board_state(state);
+                move_piece(copy.board, &coord, &possible_moves[i]);
+                if (is_player_checked(&copy, checked_player, false) == NO_CHECK) {
                     return true;
                 }
             }
@@ -246,9 +258,9 @@ static bool can_player_escape_check(board _board, enum player checked_player) {
 
 #define MAX_CHECKING_PIECES 15 // king cannot check, so at most 7 pieces + 8 promoted pawns can check = at most 15 pieces
 
-enum check_type is_player_checked(board board, enum player player, bool look_for_escape) {
+enum check_type is_player_checked(struct board_state* state, enum player player, bool look_for_escape) {
     const enum player opponent = opponent_player(player);
-    const struct coord king_coord = find_king(board, player);
+    const struct coord king_coord = find_king(state->board, player);
     struct coord checking_coords[MAX_CHECKING_PIECES];
     struct piece checking_pieces[MAX_CHECKING_PIECES];
     uint8_t n_checking_pieces = 0;
@@ -256,12 +268,12 @@ enum check_type is_player_checked(board board, enum player player, bool look_for
     struct coord coord = { .file = 0, .rank = 0 };
     for (; coord.rank < BOARD_SIZE; coord.rank++) {
         for (coord.file = 0; coord.file < BOARD_SIZE; coord.file++) {
-            const struct piece* const piece = board_at_coord(board, coord);
+            const struct piece* const piece = board_at_coord(state->board, coord);
             if (piece->type == EMPTY_SQUARE || piece->type == KING) { // neither empty squares nor kings can put in check
                 continue;
             } else if (piece->player == player) { // ignoring pieces of the same player
                 continue;
-            } else if (!can_move_to[piece->type](coord, king_coord, opponent, board)) {
+            } else if (!can_move_to[piece->type](coord, king_coord, opponent, state)) {
                 continue;
             }
 
@@ -272,7 +284,7 @@ enum check_type is_player_checked(board board, enum player player, bool look_for
             checking_coords[n_checking_pieces] = coord;
             checking_pieces[n_checking_pieces++] = *piece;
 
-            if (can_player_escape_check(board, player)) {
+            if (can_player_escape_check(state, player)) {
                 return CHECK;
             }
             return CHECKMATE;

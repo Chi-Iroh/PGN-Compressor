@@ -89,7 +89,35 @@ void print_board(board board) {
     puts("   A B C D E F G H");
 }
 
-void debug_print(struct en_passant_header* en_passant_header, struct tag* tags, size_t n_tags) {
+void read_board(board dest, char board_str[BOARD_SIZE][BOARD_SIZE + 1]) {
+    for (unsigned char rank = 0; rank < BOARD_SIZE; rank++) {
+        for (unsigned char file = 0; file < BOARD_SIZE; file++) {
+            char c = board_str[rank][file];
+            struct piece piece = {
+                .player = isupper(c) ? WHITE : BLACK,
+                .type = EMPTY_SQUARE
+            };
+
+            c = toupper(c);
+            if (c == 'P') {
+                piece.type = PAWN;
+            } else if (c == 'K') {
+                piece.type = KING;
+            } else if (c == 'Q') {
+                piece.type = QUEEN;
+            } else if (c == 'B') {
+                piece.type = BISHOP;
+            } else if (c == 'R') {
+                piece.type = ROOK;
+            } else if (c == 'N') {
+                piece.type = KNIGHT;
+            }
+            dest[rank][file] = piece;
+        }
+    }
+}
+
+void debug_print(struct en_passant* en_passant_header, struct tag* tags, size_t n_tags) {
     ASSERT_PRINTF_RETURN(en_passant_header != NULL, "En passant header is NULL !");
 
     printf(
@@ -149,6 +177,7 @@ void print_token(const struct pgn_token* token) {
 
     case NAG_OR_END_OF_THE_GAME:
         puts("NAG / end of the game");
+        break;
 
     case ALTERNATIVE_MOVE:
         printf("%s of alternative moves\n", token->move.alternative_moves_is_end ? "End" : "Beginning");

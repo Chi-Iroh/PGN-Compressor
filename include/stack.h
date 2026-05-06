@@ -20,7 +20,7 @@ bool stack_##name##_pop(struct stack_##name* stack, type* popped_elem); \
 void stack_##name##_free(struct stack_##name* stack);
 #define STACK_PROTOTYPES(type, empty_value) STACK_PROTOTYPES_WITH_NAME(type, type, empty_value)
 
-#define STACK_IMPL_WITH_NAME(type, name, empty_value)                                 \
+#define STACK_IMPL_WITH_NAME(type, name, empty_value)                                   \
 struct stack_##name stack_##name##_empty(void) {                                        \
     struct stack_##name empty = {                                                       \
         .capacity = 0,                                                                  \

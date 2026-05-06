@@ -22,4 +22,5 @@ int errprintf(const char* fmt, ...) __attribute__((format (printf, 1, 2)));
 #define ASSERT_PRINTF(condition, /* fmt, */ ...) ASSERT_PRINTF_BASE(condition, return false, __VA_ARGS__)
 #define ASSERT_PRINTF_RETURN(condition, /* fmt, */ ...) ASSERT_PRINTF_BASE(condition, return, __VA_ARGS__)
 #define ASSERT_PRINTF_RETURN_FALSE(condition, /* fmt, */ ...) ASSERT_PRINTF_BASE(condition, return false, __VA_ARGS__)
+#define ASSERT_PRINTF_TRAP(condition, /* fmt, */ ...) ASSERT_PRINTF_BASE(condition, abort(), __VA_ARGS__)
 #define FAIL(/* fmt, */ ...) ASSERT_PRINTF_EXIT_PROGRAM(false, __VA_ARGS__)

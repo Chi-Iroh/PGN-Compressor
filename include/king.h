@@ -8,9 +8,9 @@
  * @param board position right before the move
  * @returns the move if it's valid, std::nullopt otherwise
 */
-bool parse_king_move(struct move* move, const char* str, enum player moving_player, board board);
+bool parse_king_move(struct move* move, const char* str, enum player moving_player, struct board_state* state);
 
-bool can_king_move_to(struct coord from, struct coord to, enum player moving_player, board board, bool check_is_is_dest_square_safe);
+bool can_king_move_to(struct coord from, struct coord to, enum player moving_player, struct board_state* state, bool check_is_is_dest_square_safe);
 
 extern  struct coord king_starting_coords[PLAYER_SIZE];
 extern struct coord king_ending_coords[PLAYER_SIZE][CASTLING_SIZE];

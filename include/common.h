@@ -11,7 +11,7 @@
 bool parse_move(struct move* move, enum piece_type piece, const char* str, enum player moving_player);
 
 /**
- * @brief Finds the starting square of a bishop move.
+ * @brief Finds the starting square of a move.
  * @returns true if it exists and is valid, false otherwise
  * @param board current position (before the move)
  * @param move current move
@@ -19,5 +19,4 @@ bool parse_move(struct move* move, enum piece_type piece, const char* str, enum 
  * @note if a valid starting square is found, move.from is updated
  * @note if a starting square was specified (in a move like Ba2b3), the starting coordinates are verified, true is returned if they're valid, false otherwise
  */
-bool find_starting_square(board /* board */, struct move* move, bool (*can_move_to)(struct coord, struct coord, enum player, board));
-//                               ^^^^^^^^^^ the first argument cannot be named 'board' here, because the board type          ^^^^^ in can_move_to functor will fail to compile
+bool find_starting_square(struct board_state* state, struct move* move, bool (*can_move_to)(struct coord, struct coord, enum player, struct board_state*));

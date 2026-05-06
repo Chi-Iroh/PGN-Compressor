@@ -9,10 +9,6 @@
 static unsigned char count_digits(line_number n) {
     unsigned char count = 0;
 
-    if (n < 0) {
-        count++;
-        n = -n;
-    }
     do {
         count++;
         n /= 10;
@@ -74,6 +70,7 @@ const char* _loc_str(struct _source_location loc, bool is_caller) {
     const size_t locsize = _compute_loc_size(&loc, is_caller);
 
     alloc_or_realloc(&str, size, locsize);
+    ASSERT_PRINTF_EXIT_PROGRAM(str != NULL, "Couldn't allocate %zu byte%s for loc_str !", size, size > 1 ? "s" : "");
     sprintf(str, "[LOG] %s %s:" PRINTF_LINE_NUMBER_FLAG " (%s)\n", (is_caller) ? "From" : "At", loc.file, loc.line, loc.func);
     size = locsize;
     return str;
@@ -103,7 +100,7 @@ struct source_location loc_here(const struct source_location* caller, const char
         .func = func,
         .line = line,
         .strsize = 0,
-        .call_stack = { 0 },
+        .call_stack = { { 0 } },
         .call_stack_size = 0,
         .callers_str_cumulative_size = 0
     };

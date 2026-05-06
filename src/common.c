@@ -73,20 +73,20 @@ parsing_ok:
     return true;
 }
 
-bool find_starting_square(board _board, struct move* move, bool (*can_move_to)(struct coord, struct coord, enum player, board)) {
+bool find_starting_square(struct board_state* state, struct move* move, bool (*can_move_to)(struct coord, struct coord, enum player, struct board_state*)) {
     const bool is_file_valid = move->from.file != INVALID_COORD;
     const bool is_rank_valid = move->from.rank != INVALID_COORD;
 
     if (is_file_valid && is_rank_valid) {
-        return can_move_to(move->from, move->to, move->player, _board);
+        return can_move_to(move->from, move->to, move->player, state);
     } else if (is_file_valid || is_rank_valid) {
         int* coord_not_set = is_file_valid ? &move->from.rank : &move->from.file;
         for (size_t coord = 0; coord < BOARD_SIZE; coord++) {
             *coord_not_set = coord;
-            if (board_at_coord(_board, move->from)->type != EMPTY_SQUARE) {
+            if (board_at_coord(state->board, move->from)->type != EMPTY_SQUARE) {
                 continue;
             }
-            if (can_move_to(move->from, move->to, move->player, _board)) {
+            if (can_move_to(move->from, move->to, move->player, state)) {
                 return true;
             }
         }
@@ -99,10 +99,10 @@ bool find_starting_square(board _board, struct move* move, bool (*can_move_to)(s
         move->from.rank = rank;
         for (size_t file = 0; file < BOARD_SIZE; file++) {
             move->from.file = file;
-            if (board_at_coord(_board, move->from)->type != EMPTY_SQUARE) {
+            if (board_at_coord(state->board, move->from)->type != EMPTY_SQUARE) {
                 continue;
             }
-            if (can_move_to(move->from, move->to, move->player, _board)) {
+            if (can_move_to(move->from, move->to, move->player, state)) {
                 return true;
             }
         }

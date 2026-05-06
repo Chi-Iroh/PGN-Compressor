@@ -1,3 +1,4 @@
+#!/bin/env python3
 null_byte = "0" * 8
 
 def text(str):
@@ -160,7 +161,7 @@ if l > 0:
 
 l = len(s)
 
-file = open("example.cpgn", "wb")
+file = open("cpgn/example.cpgn", "wb")
 while s != "":
     t = s[:8]
     n = int(t, 2)

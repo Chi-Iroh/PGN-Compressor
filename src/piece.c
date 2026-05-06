@@ -45,6 +45,7 @@ const enum piece_type PROMOTION_PIECE[4] = {
 };
 
 enum player opponent_player(enum player player) {
+    ASSERT_PRINTF_EXIT_PROGRAM(player != INVALID_PLAYER, "Cannot determine the opponent of an invalid player !");
     ASSERT_PRINTF_EXIT_PROGRAM(player < PLAYER_SIZE, "Unknown player (code %d), cannot determine its opponent !", player);
     return (player == WHITE) ? BLACK : WHITE;
 }

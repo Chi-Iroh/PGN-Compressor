@@ -7,15 +7,15 @@
 #include "../include/king.h"
 #include "../include/piece.h"
 
-bool can_king_move_to(struct coord from, struct coord to, enum player moving_player, board board, bool check_is_is_dest_square_safe) {
+bool can_king_move_to(struct coord from, struct coord to, enum player moving_player, struct board_state* state, bool check_is_is_dest_square_safe) {
     if (abs(from.file - to.file) > 1 || abs(from.rank - to.rank) > 1) {
         return false; // king can only move 1 square
-    } else if (board_at_coord(board, to)->type != EMPTY_SQUARE) {
+    } else if (board_at_coord(state->board, to)->type != EMPTY_SQUARE) {
         return false;
     }
 
     if (check_is_is_dest_square_safe) {
-        return !is_square_attacked_by(board, to, opponent_player(moving_player), false);
+        return !is_square_attacked_by(state, to, opponent_player(moving_player), false);
     }
     return true;
 }
@@ -94,7 +94,7 @@ static bool is_square_crossed_by_king_during_castling(struct coord square, struc
         square.file >= end.file;
 }
 
-static bool check_castling_move(const struct move* move, board board) {
+static bool check_castling_move(const struct move* move, struct board_state* state) {
     ASSERT_PRINTF(move->extra_infos.piece_type == KING, "Move '%s' is not a castling move !", move->algebraic_move);
     const struct king_move_infos* const castling_infos = &move->extra_infos.infos.king_infos;
     const enum castling castling = castling_infos->castling;
@@ -104,8 +104,8 @@ static bool check_castling_move(const struct move* move, board board) {
     const enum player opponent = opponent_player(move->player);
     const struct coord rook_coords = rook_starting_coords[move->player][castling];
 
-    const struct piece rook_coords_square = *board_at_coord(board, rook_coords);
-    const struct piece current_coords_square = *board_at_coord(board, position);
+    const struct piece rook_coords_square = *board_at_coord(state->board, rook_coords);
+    const struct piece current_coords_square = *board_at_coord(state->board, position);
     if (rook_coords_square.type != ROOK || rook_coords_square.player != move->player) {
         return false;
     } else if (current_coords_square.type != KING || current_coords_square.player != move->player) {
@@ -114,9 +114,9 @@ static bool check_castling_move(const struct move* move, board board) {
 
     position.file += file_increment;
     while (position.file != rook_coords.file) {
-        if (board_at_coord(board, position)->type != EMPTY_SQUARE) {
+        if (board_at_coord(state->board, position)->type != EMPTY_SQUARE) {
             return false;
-        } else if (is_square_crossed_by_king_during_castling(position, end, file_increment) && is_square_attacked_by(board, position, opponent, false)) {
+        } else if (is_square_crossed_by_king_during_castling(position, end, file_increment) && is_square_attacked_by(state, position, opponent, false)) {
             return false;
         }
         position.file += file_increment;
@@ -125,16 +125,16 @@ static bool check_castling_move(const struct move* move, board board) {
 }
 
 // forwards last argument
-static bool _can_king_move_to(struct coord from, struct coord to, enum player moving_player, board board) {
-    return can_king_move_to(from, to, moving_player, board, true);
+static bool _can_king_move_to(struct coord from, struct coord to, enum player moving_player, struct board_state* state) {
+    return can_king_move_to(from, to, moving_player, state, true);
 }
 
-bool parse_king_move(struct move* move, const char* str, enum player moving_player, board board) {
+bool parse_king_move(struct move* move, const char* str, enum player moving_player, struct board_state* state) {
     if (parse_move(move, KING, str, moving_player)) {
-        ASSERT_PRINTF(find_starting_square(board, move, _can_king_move_to), "Cannot find a starting square !\nMove: '%s'", move->algebraic_move);
+        ASSERT_PRINTF(find_starting_square(state, move, _can_king_move_to), "Cannot find a starting square !\nMove: '%s'", move->algebraic_move);
         return true;
     } else if (parse_castling_move(move, str, moving_player)) {
-        ASSERT_PRINTF(check_castling_move(move, board), "Forbidden castling !\nMove: %s", move->algebraic_move);
+        ASSERT_PRINTF(check_castling_move(move, state), "Forbidden castling !\nMove: %s", move->algebraic_move);
         return move;
     }
     return false;

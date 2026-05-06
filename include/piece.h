@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "bits_constants.h"
+#include "en_passant.h"
 #include "stack.h"
 
 #define BOARD_SIZE 8
@@ -147,6 +148,7 @@ struct previous_board_state {
     enum player current_player;
     unsigned move_turn;
     board board;
+    struct move previous_move;
 };
 
 STACK_STRUCT_WITH_NAME(struct previous_board_state, previous_board_state)
@@ -156,13 +158,17 @@ struct board_state {
     unsigned move_turn;
     board board;
     board previous_board;
+    struct move previous_move;
     struct stack_previous_board_state previous_states; // previous states, before alternative moves
+    struct en_passant en_passant;
 };
 
 struct board_state empty_board_state(void);
 void free_board_state(struct board_state* state);
+struct board_state copy_board_state(const struct board_state* state);
+
 void next_turn(struct board_state* state);
-// bool apply_move(struct board_state* state, const struct move* move);
+bool apply_move(struct board_state* state, const struct move* move);
 
 bool board_start_alternative_moves(struct board_state* state);
 bool board_end_alternative_moves(struct board_state* state);
@@ -178,7 +184,7 @@ struct piece* board_at(board board, int file, int rank);
  * In that case, the opponent king might attack the square.
  * If so, we only need to verify if the opponent king can move there, we don't care if moving puts the opponent king in check because if it would have moved the game would be finished.
  */
-bool is_square_attacked_by(board board, struct coord coord, enum player attacker, bool if_opponent_king_can_attack_then_check_if_square_safe);
+bool is_square_attacked_by(struct board_state* state, struct coord coord, enum player attacker, bool if_opponent_king_can_attack_then_check_if_square_safe);
 
 /**
  * Counts how many pawns of the given player are ready to promote (second to last rank), stores each coord in the array and returns the count.
@@ -204,11 +210,11 @@ int qsort_compare_piece_by_index(const void* /* struct coord* */ coord1, const v
 /**
  * Returns how many pieces of the given type of the given player can move to the given square.
  */
-uint8_t count_how_many_pieces_of_same_type_can_move_to_square(board board, enum player player, enum piece_type piece, struct coord* to, struct coord coords[MAX_PIECES_TO_GO_TO_SAME_SQUARE]);
+uint8_t count_how_many_pieces_of_same_type_can_move_to_square(struct board_state* state, enum player player, enum piece_type piece, struct coord* to, struct coord coords[MAX_PIECES_TO_GO_TO_SAME_SQUARE]);
 
 // ----------------------------------------------------------------------------
 
-extern bool (*const can_move_to[])(struct coord from, struct coord to, enum player moving_player, board board);
+extern bool (*const can_move_to[])(struct coord from, struct coord to, enum player moving_player, struct board_state* state);
 
 /**
  * Returns if the player is in check, checkmate or nothing.
@@ -216,4 +222,4 @@ extern bool (*const can_move_to[])(struct coord from, struct coord to, enum play
  * Then it'll return CHECK if so, and CHECKMATE if not.
  * Passing false to this parameter just looks if the player is in check, and can return only NO_CHECK or CHECK
  */
-enum check_type is_player_checked(board board, enum player player, bool look_for_escape);
+enum check_type is_player_checked(struct board_state* state, enum player player, bool look_for_escape);

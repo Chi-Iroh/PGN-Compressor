@@ -7,6 +7,10 @@
 int errprintf(const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
-    const int n = vfprintf(stderr, fmt, args);
-    return n + fprintf(stderr, ": %s\n", strerror(errno));
+    int n = vfprintf(stderr, fmt, args);
+    if (errno != 0) {
+        n += fprintf(stderr, ": %s (errno %i)\n", strerror(errno), errno);
+    }
+    va_end(args);
+    return n;
 }

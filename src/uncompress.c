@@ -13,13 +13,23 @@
 #include "../include/error.h"
 #include "../include/king.h"
 #include "../include/log.h"
+#include "../include/pawn.h"
 #include "../include/read.h"
 #include "../include/piece.h"
 #include "../include/safe_bool.h"
 #include "../include/source_location.h"
 #include "../include/uncompress.h"
 
-static bool parse_en_passant_header(struct compressed_buf* buf, struct en_passant_header* header) {
+void free_token(struct pgn_token* token) {
+    if (token == NULL) {
+        return;
+    }
+    if (token->type == COMMENT) {
+        free(token->move.comment);
+    }
+}
+
+static bool parse_en_passant_header(struct compressed_buf* buf, struct en_passant* header) {
     ASSERT_PRINTF(buf != NULL, "Compressed buffer is NULL !");
     ASSERT_PRINTF(header != NULL, "En passant header is NULL !");
 
@@ -302,7 +312,9 @@ static bool parse_alternative_moves(struct compressed_buf* buf, struct board_sta
     while (true) {
         if (parse_move(buf, state, token) != TRUE) {
             return false;
-        } else if (token->type == ALTERNATIVE_MOVE && token->move.alternative_moves_is_end) {
+        }
+        free_token(token);
+        if (token->type == ALTERNATIVE_MOVE && token->move.alternative_moves_is_end) {
             break;
         }
     }
@@ -320,11 +332,18 @@ static bool parse_move_impl(struct compressed_buf* buf, struct board_state* stat
     LOG("A %s %s (%d) is moving", (state->current_player == WHITE ? "white" : "black"), PIECES_NAME[token->move.move.piece], token->move.move.piece);
     LOG("file: %c (raw: %d) // rank: %d (raw: %d)\n", 'a' + file, file, 1 + rank, rank);
 
+    if (token->move.move.piece == PAWN) {
+        check_for_en_passant(&token->move.move, state);
+    }
+    puts("Prev move__ :");
+    print_move(&state->previous_move, stdout);
+
     struct coord coords[8];
-    const uint8_t count = count_how_many_pieces_of_same_type_can_move_to_square(state->board, state->current_player, token->move.move.piece, &token->move.move.to, coords);
-    LOG("%hhu piece%s can move to the square %c%hhu\n", count, count >= 2 ? "s" : "", 'a' + token->move.move.to.file, 1 + token->move.move.to.rank);
+    const uint8_t count = count_how_many_pieces_of_same_type_can_move_to_square(state, state->current_player, token->move.move.piece, &token->move.move.to, coords);
+    LOG("%s: %hhu piece%s can move to the square %c%hhu\n", PLAYER_NAMES[state->current_player], count, count >= 2 ? "s" : "", 'a' + token->move.move.to.file, 1 + token->move.move.to.rank);
     if (count == 0) {
         print_board(state->board);
+        abort();
     }
 
     struct coord* coord = &coords[0];
@@ -340,10 +359,9 @@ static bool parse_move_impl(struct compressed_buf* buf, struct board_state* stat
     token->move.move.piece = board_at_coord(state->board, *coord)->type;
 
     // we must apply the move before calling is_player_checked, but we do it on a temp board, as the move is applied in the main uncompressing loop
-    board copy;
-    memcpy(copy, state->board, sizeof(board));
-    apply_move_on_raw_board(token, copy);
-    token->move.move.check = is_player_checked(copy, opponent_player(state->current_player), true);
+    struct board_state copy = copy_board_state(state);
+    apply_move_token(token, &copy);
+    token->move.move.check = is_player_checked(&copy, opponent_player(state->current_player), true);
     return true;
 }
 
@@ -389,6 +407,9 @@ static enum safe_bool parse_move(struct compressed_buf* buf, struct board_state*
                         return parse_comment(buf, token);
                     case 1:
                         return parse_alternative_moves(buf, state, token);
+                    default:
+                        FAIL("Invalid extra 2nd bit: %" PRIu8, extra_2nd_bit);
+                        return false;
                 }
 
             case 1:
@@ -397,6 +418,9 @@ static enum safe_bool parse_move(struct compressed_buf* buf, struct board_state*
                         return parse_nag(buf, token);
                     case 1:
                         return parse_end_of_the_game(buf, token);
+                    default:
+                        FAIL("Invalid extra 2nd bit: %" PRIu8, extra_2nd_bit);
+                        return false;
                 }
 
             default:
@@ -404,15 +428,6 @@ static enum safe_bool parse_move(struct compressed_buf* buf, struct board_state*
         }
     }
     FAIL("Invalid bits !");
-}
-
-void free_token(struct pgn_token* token) {
-    if (token == NULL) {
-        return;
-    }
-    if (token->type == COMMENT) {
-        free(token->move.comment);
-    }
 }
 
 static bool parse_version(struct compressed_buf* buf, uint8_t* version) {
@@ -439,7 +454,7 @@ int uncompress(const struct args* args) {
         .remaining_bits = size * 8
     };
     uint8_t version = 0;
-    struct en_passant_header en_passant_header;
+    struct en_passant en_passant_header;
     struct tag* tags = NULL;
     size_t n_tags = 0;
     size_t max_tags;
@@ -464,11 +479,13 @@ int uncompress(const struct args* args) {
         }
         print_token(&token);
         if (token.type == END_OF_THE_GAME) {
+            free_token(&token);
             break;
         }
-        apply_move(&token, &board_state);
+        apply_move_token(&token, &board_state);
         next_turn(&board_state);
         has_moves = true;
+        free_token(&token);
     }
     if (state == ERROR) {
         status = false;

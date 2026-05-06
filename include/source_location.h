@@ -8,7 +8,7 @@
 
 #define SOURCE_LOCATION_STACK_MAX 32
 
-typedef uint32_t line_number; // C99 §6.10.4 (Line control) says it's undefined behavior to have more than 2147483647 lines, it fits in an int32_t, but uint32_t won't heart
+typedef uint32_t line_number; // C99 §6.10.4 (Line control) says it's undefined behavior to have more than 2147483647 lines, it fits in an int32_t, but uint32_t won't hurt
 #define PRINTF_LINE_NUMBER_FLAG "%" PRId32
 
 struct _source_location {
