@@ -50,8 +50,8 @@ void apply_move_token(const struct pgn_token* token, struct board_state* state) 
     state->previous_move = token->move.move;
     puts("Prev move :");
     print_move(&state->previous_move, stdout);
-    LOG_FROM(LOC_HERE, "Saving board :");
-    print_board(state->previous_board);
+    // LOG_FROM(LOC_HERE, "Saving board :");
+    // print_board(state->previous_board);
     apply_move_on_raw_board(token, state->board);
     LOG_FROM(LOC_HERE, "Board after move :");
     print_board(state->board);

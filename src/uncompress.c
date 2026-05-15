@@ -233,6 +233,7 @@ static bool parse_comment(struct compressed_buf* buf, struct pgn_token* token) {
             .comment = comment
         }
     };
+    LOG("COMMENT %s", comment);
     return true;
 }
 
@@ -406,6 +407,7 @@ static enum safe_bool parse_move(struct compressed_buf* buf, struct board_state*
                     case 0:
                         return parse_comment(buf, token);
                     case 1:
+                        LOG("****************** ALTERNATIVE MOVES ****************************");
                         return parse_alternative_moves(buf, state, token);
                     default:
                         FAIL("Invalid extra 2nd bit: %" PRIu8, extra_2nd_bit);
