@@ -78,6 +78,7 @@ uint8_t count_pawns_ready_to_promote(board board, enum player pawn_player, struc
 }
 
 bool nth_piece(board board, enum player player, enum piece_type piece, uint8_t nth, struct coord* coord) {
+    ASSERT_PRINTF_RETURN_FALSE(player != INVALID_PLAYER, "Invalid player");
     const struct piece expected_piece = {
         .player = player,
         .type = piece

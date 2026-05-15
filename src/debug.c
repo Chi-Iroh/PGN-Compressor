@@ -64,6 +64,7 @@ void print_pgn_token(struct pgn_token* token, FILE* file) {
 }
 
 void print_board(board board) {
+    puts("WHITE = UPPERCASE, black = lowercase");
     puts("   A B C D E F G H");
     puts("  +-+-+-+-+-+-+-+-+");
     for (uint8_t rank = 0; rank < BOARD_SIZE; rank++) {

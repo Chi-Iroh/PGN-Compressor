@@ -123,26 +123,6 @@ const char* PLAYER_NAMES[PLAYER_SIZE] = {
     [INVALID_PLAYER] = "<invalid player>"
 };
 
-// static void find_king(board board, enum player player, struct coord* coord) {
-//     ASSERT_PRINTF_RETURN(player != INVALID_PLAYER, "Invalid player !");
-//     const struct piece king = {
-//         .player = player,
-//         .type = KING
-//     };
-//     for (unsigned rank = 0; rank < BOARD_SIZE; rank++) {
-//         for (unsigned file = 0; file < BOARD_SIZE; file++) {
-//             if (are_pieces_equal(board_at(board, file, rank), &king)) {
-//                 *coord = (struct coord) {
-//                     .file = file,
-//                     .rank = rank
-//                 };
-//                 return;
-//             }
-//         }
-//     }
-//     FAIL("Cannot find %s king on the board !", PLAYER_NAMES[player]);
-// }
-
 // checks if player is in check
 static bool is_in_check(struct board_state* state, enum player player, struct coord* checking_piece_coord) {
     ASSERT_PRINTF(player != INVALID_PLAYER, "Invalid player !");
