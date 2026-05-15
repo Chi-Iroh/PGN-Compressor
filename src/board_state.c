@@ -82,8 +82,10 @@ bool board_start_alternative_moves(struct board_state* state) {
     LOG("ALTERNATIVE MOVES START !");
     struct previous_board_state prev_state = {
         .move_turn = state->move_turn,
+        // The current player is the opponent of the one who played the last move (the move we want to change)
+        // Thus we must invert the player to make them play again
         .current_player = opponent_player(state->current_player),
-        .previous_move = state->previous_move
+        .previous_move = state->previous_move // discards what the current player just moved
     };
     memcpy(prev_state.board, state->board, sizeof(board));
 
