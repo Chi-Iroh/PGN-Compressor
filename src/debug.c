@@ -18,6 +18,9 @@ void print_move(const struct move* move, FILE* file) {
         fputc(PIECE_CHAR[move->piece], file);
     }
     if (move->capture) {
+        if (move->piece == PAWN) {
+            fputc('a' + move->from.file, file);
+        }
         fputc('x', file);
     }
     fputc(FILE_NAMES[move->to.file], file);
