@@ -27,8 +27,8 @@ struct pgn_token move_to_token(struct move* move) {
 }
 
 void play_move(struct board_state* state, struct move* move) {
-    state->previous_move = *move;
     const struct pgn_token pgn_token = move_to_token(move);
     apply_move(&pgn_token, state->board);
+    state->previous_move = *move;
     next_turn(state);
 }
