@@ -52,6 +52,10 @@ PRIVATE_FUNCTION bool _parse_pawn_move(struct move* move, const char* str, enum 
 }
 
 static bool can_pawn_en_passant_to(struct coord from, struct coord to, enum player moving_player, struct board_state* state, struct coord* captured_pawn) {
+    if (state->current_player == WHITE && state->move_turn == 0) { // Cannot en passant during the first turn, no previous turn
+        return false;
+    }
+
     printf("EN PASSANT CHECK, from %c%i to %c%i\n", 'A' + from.file, 1 + from.rank, 'A' + to.file, 1 + to.rank);
     const int forward = (moving_player == WHITE) ? 1 : -1;
     if (from.rank + forward != to.rank) { // an en passant is always a capture

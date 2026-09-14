@@ -402,6 +402,7 @@ static enum safe_bool parse_move(struct compressed_buf* buf, struct board_state*
     ASSERT_PRINTF(token != NULL, "PGN token is NULL !");
 
     memset(token, 0, sizeof(struct pgn_token));
+    token->move.move.player = state->current_player;
 
     uint8_t token_3bits;
     if (!read_n_bits(buf, 3, &token_3bits)) {
