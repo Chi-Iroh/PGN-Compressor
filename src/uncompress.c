@@ -362,15 +362,12 @@ static bool parse_move_impl(struct compressed_buf* buf, struct board_state* stat
     LOG("A %s %s (%d) is moving", (state->current_player == WHITE ? "white" : "black"), PIECES_NAME[token->move.move.piece], token->move.move.piece);
     LOG("file: %c (raw: %d) // rank: %d (raw: %d)\n", 'a' + file, file, 1 + rank, rank);
 
-    if (token->move.move.piece == PAWN) {
-        check_if_is_en_passant(&token->move.move, state);
-    }
     puts("Prev move__ :");
     print_move(&state->previous_move, stdout);
 
     struct coord coords[8];
     const uint8_t count = count_how_many_pieces_of_same_type_can_move_to_square(state, state->current_player, token->move.move.piece, &token->move.move.to, coords);
-    LOG("%s: %hhu piece%s can move to the square %c%hhu\n", PLAYER_NAMES[state->current_player], count, count >= 2 ? "s" : "", 'a' + token->move.move.to.file, 1 + token->move.move.to.rank);
+    LOG("%s: %hhu %s%s can move to the square %c%hhu\n", PLAYER_NAMES[state->current_player], count, PIECES_NAME[token->move.move.piece], count >= 2 ? "s" : "", 'a' + token->move.move.to.file, 1 + token->move.move.to.rank);
     if (count == 0) {
         print_board(state->board, stdout);
         abort();
@@ -390,10 +387,13 @@ static bool parse_move_impl(struct compressed_buf* buf, struct board_state* stat
 
     // we must apply the move before calling is_player_checked, but we do it on a temp board, as the move is applied in the main uncompressing loop
     struct board_state copy = copy_board_state(state);
-    apply_move_token(token, &copy);
+    apply_move_token(token, &copy, false /* no log for copy */);
     token->move.move.check = is_player_checked(&copy, opponent_player(state->current_player), true);
 
     token->move.move.extra_infos = empty_extra_infos(token->move.move.piece);
+    if (token->move.move.piece == PAWN) {
+        check_if_is_en_passant(&token->move.move, state);
+    }
     return true;
 }
 
@@ -506,6 +506,7 @@ int uncompress(const struct args* args) {
     struct board_state board_state = empty_board_state();
     struct pgn_token token;
     enum safe_bool state;
+    printf("First ply with player %s.\n", PLAYER_NAMES[board_state.current_player]);
     while (!is_buf_empty(&buf)) {
         if ((state = parse_move(&buf, &board_state, &token)) != TRUE) {
             break;
@@ -515,10 +516,16 @@ int uncompress(const struct args* args) {
             free_token(&token);
             break;
         }
-        apply_move_token(&token, &board_state);
+        apply_move_token(&token, &board_state, true);
+        board_state.previous_move = token.move.move;
+
+        printf("Cur ply from player %s and Prev ply from player %s\n", PLAYER_NAMES[token.move.move.player], PLAYER_NAMES[board_state.previous_move.player]);
+
         next_turn(&board_state);
         has_moves = true;
         free_token(&token);
+        printf("Previous ply with player %s.\n", PLAYER_NAMES[board_state.previous_move.player]);
+        printf("Next ply (turn %d) with player %s.\n", board_state.move_turn, PLAYER_NAMES[board_state.current_player]);
     }
     if (state == ERROR) {
         status = false;

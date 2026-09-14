@@ -87,6 +87,7 @@ static bool can_pawn_en_passant_to(struct coord from, struct coord to, enum play
             const struct move* last_move = &state->previous_move;
             const int opponent_forward = (last_move->player == WHITE) ? 1 : -1;
             if (last_move->player != opponent) {
+                printf("Expected last move played by %s but was %s instead\n", PLAYER_NAMES[last_move->player], PLAYER_NAMES[opponent]);
                 puts("DEBUG bad move:");
                 print_move(last_move, stdout);
                 puts("5");
@@ -123,7 +124,9 @@ void check_if_is_en_passant(struct move* move, struct board_state* state) {
     const bool en_passant = can_pawn_en_passant_to(move->from, move->to, move->player, state, &captured_pawn);
 
     if (en_passant) {
+        // FIXME: what about move->extra_infos.infos.pawn_infos.has_en_passant_extra_ep_notation ?
         move->extra_infos.infos.pawn_infos.en_passant = true;
+        move->capture = true;
         move->extra_infos.infos.pawn_infos.en_passant_captured_pawn_pos = captured_pawn;
     }
 }
@@ -137,6 +140,7 @@ bool can_pawn_move_to(struct coord from, struct coord to, enum player moving_pla
 
     struct coord en_passant_captured_pawn_pos = INVALID_COORD_STRUCT;
     if (can_pawn_en_passant_to(from, to, moving_player, state, &en_passant_captured_pawn_pos)) {
+        //DUBIOUS: WHY prev move and not current move here ?
         state->previous_move.extra_infos.piece_type = PAWN;
         state->previous_move.extra_infos.infos.pawn_infos = (struct pawn_move_infos) {
             .en_passant = true,
