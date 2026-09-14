@@ -23,9 +23,22 @@ static void apply_castling(const struct pgn_token* token, board board) {
 
 void apply_move_impl(const struct pgn_token* token, board board) {
     move_piece(board, &token->move.move.from, &token->move.move.to);
+
+    // En passant is the only capturing move where the moving piece goes to a different square than the captured piece
+    if (token->move.move.piece == PAWN &&
+        token->move.move.capture &&
+        token->move.move.extra_infos.piece_type == PAWN &&
+        token->move.move.extra_infos.infos.pawn_infos.en_passant)
+    {
+        struct piece* const captured_pawn = board_at_coord(board, token->move.move.extra_infos.infos.pawn_infos.en_passant_captured_pawn_pos);
+        *captured_pawn = (struct piece) {
+            .type = EMPTY_SQUARE,
+            .player = INVALID_PLAYER
+        };
+    }
 }
 
-void apply_move_on_raw_board(const struct pgn_token* token, board board) {
+void apply_move(const struct pgn_token* token, board board) {
     switch (token->type) {
         case MOVE_BISHOP:
         case MOVE_KING:
@@ -51,8 +64,8 @@ void apply_move_token(const struct pgn_token* token, struct board_state* state) 
     puts("Prev move :");
     print_move(&state->previous_move, stdout);
     LOG_FROM(LOC_HERE, "Saving board :");
-    print_board(state->previous_board);
-    apply_move_on_raw_board(token, state->board);
+    print_board(state->previous_board, stdout);
+    apply_move(token, state->board);
     LOG_FROM(LOC_HERE, "Board after move :");
-    print_board(state->board);
+    print_board(state->board, stdout);
 }

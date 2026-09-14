@@ -63,14 +63,14 @@ void print_pgn_token(struct pgn_token* token, FILE* file) {
     }
 }
 
-void print_board(board board) {
-    puts("WHITE = UPPERCASE, black = lowercase");
-    puts("   A B C D E F G H");
-    puts("  +-+-+-+-+-+-+-+-+");
+void print_board(board board, FILE* file) {
+    fputs("WHITE = UPPERCASE, black = lowercase\n", file);
+    fputs("   A B C D E F G H\n", file);
+    fputs("  +-+-+-+-+-+-+-+-+\n", file);
     for (uint8_t rank = 0; rank < BOARD_SIZE; rank++) {
-        printf("%" PRIu8 " |", rank + 1);
-        for (uint8_t file = 0; file < BOARD_SIZE; file++) {
-            const struct piece* piece = board_at(board, file, rank);
+        fprintf(file, "%" PRIu8 " |", rank + 1);
+        for (uint8_t _file = 0; _file < BOARD_SIZE; _file++) {
+            const struct piece* piece = board_at(board, _file, rank);
             char piece_char;
             if (piece->type == PAWN) {
                 piece_char = 'P';
@@ -82,12 +82,12 @@ void print_board(board board) {
             if (piece->player == BLACK) {
                 piece_char = tolower(piece_char);
             }
-            printf("%c|", piece_char);
+            fprintf(file, "%c|", piece_char);
         }
-        putchar('\n');
-        puts("  +-+-+-+-+-+-+-+-+");
+        fputc('\n', file);
+        fputs("  +-+-+-+-+-+-+-+-+\n", file);
     }
-    puts("   A B C D E F G H");
+    fputs("   A B C D E F G H\n", file);
 }
 
 void read_board(board dest, char board_str[BOARD_SIZE][BOARD_SIZE + 1]) {
@@ -95,7 +95,7 @@ void read_board(board dest, char board_str[BOARD_SIZE][BOARD_SIZE + 1]) {
         for (unsigned char file = 0; file < BOARD_SIZE; file++) {
             char c = board_str[rank][file];
             struct piece piece = {
-                .player = isupper(c) ? WHITE : BLACK,
+                .player = c == ' ' ? INVALID_PLAYER : (isupper(c) ? WHITE : BLACK),
                 .type = EMPTY_SQUARE
             };
 

@@ -19,6 +19,8 @@ const struct coord INVALID_COORD_STRUCT = {
 
 const struct pawn_move_infos EMPTY_PAWN_MOVE_INFOS = {
     .en_passant = false,
+    .en_passant_captured_pawn_pos = INVALID_COORD_STRUCT,
+    .has_en_passant_extra_ep_notation = false,
     .promoted = false,
     .promotion_piece = EMPTY_SQUARE
 };

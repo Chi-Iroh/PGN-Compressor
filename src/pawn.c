@@ -51,34 +51,7 @@ PRIVATE_FUNCTION bool _parse_pawn_move(struct move* move, const char* str, enum 
     return true;
 }
 
-void check_for_en_passant(struct move* move, struct board_state* state) {
-    if (state->move_turn == 0 && state->current_player == WHITE) {
-        return; // to en passant, the previous must be checked, so no en passant on the very first turn
-    }
-
-    move->extra_infos.infos.pawn_infos.en_passant = false;
-    move->extra_infos.infos.pawn_infos.has_en_passant_extra_ep_notation = false;
-
-    const int rank_diff = abs(move->from.rank - move->to.rank);
-    const int previous_rank_diff = abs(state->previous_move.from.rank - state->previous_move.to.rank);
-
-    if (previous_rank_diff == 2 && state->previous_move.to.rank == move->from.rank) {
-        if (rank_diff == 1) {
-            if (abs(move->from.file - state->previous_move.to.file) == 1) { // to en passant, pawns must be next to each other
-                const int forward_increment = move->player == WHITE ? 1 : -1;
-                if (state->previous_move.to.rank - forward_increment == move->to.rank) { // must go forwards
-                    ASSERT_PRINTF_EXIT_PROGRAM(++state->en_passant.nth_en_passant > state->en_passant.n_en_passant, "More en passant in game than in the header !");
-                    LOG("en passant detected");
-                    move->capture = true;
-                    move->extra_infos.infos.pawn_infos.en_passant = true;
-                    move->extra_infos.infos.pawn_infos.has_en_passant_extra_ep_notation = state->en_passant.has_en_passant_extra_ep_notation[state->en_passant.nth_en_passant];
-                }
-            }
-        }
-    }
-}
-
-static bool can_pawn_en_passant_to(struct coord from, struct coord to, enum player moving_player, struct board_state* state) {
+static bool can_pawn_en_passant_to(struct coord from, struct coord to, enum player moving_player, struct board_state* state, struct coord* captured_pawn) {
     printf("EN PASSANT CHECK, from %c%i to %c%i\n", 'A' + from.file, 1 + from.rank, 'A' + to.file, 1 + to.rank);
     const int forward = (moving_player == WHITE) ? 1 : -1;
     if (from.rank + forward != to.rank) { // an en passant is always a capture
@@ -125,6 +98,7 @@ static bool can_pawn_en_passant_to(struct coord from, struct coord to, enum play
                 puts("8");
                 return false; // Cannot en passant anymore, that pawn didn't move 2 squares the last turn
             }
+            *captured_pawn = nearby_pawn;
             return true;
         } else {
             puts("Dest square isn't empty !");
@@ -136,6 +110,20 @@ static bool can_pawn_en_passant_to(struct coord from, struct coord to, enum play
     return false;
 }
 
+void check_if_is_en_passant(struct move* move, struct board_state* state) {
+    if (state->move_turn == 0 && state->current_player == WHITE) {
+        return; // to en passant, the previous must be checked, so no en passant on the very first turn
+    }
+
+    struct coord captured_pawn = INVALID_COORD_STRUCT;
+    const bool en_passant = can_pawn_en_passant_to(move->from, move->to, move->player, state, &captured_pawn);
+
+    if (en_passant) {
+        move->extra_infos.infos.pawn_infos.en_passant = true;
+        move->extra_infos.infos.pawn_infos.en_passant_captured_pawn_pos = captured_pawn;
+    }
+}
+
 bool can_pawn_move_to(struct coord from, struct coord to, enum player moving_player, struct board_state* state) {
     if (moving_player == WHITE && to.rank < from.rank) {
         return false; // moving backwards is forbidden
@@ -143,10 +131,12 @@ bool can_pawn_move_to(struct coord from, struct coord to, enum player moving_pla
         return false; // moving backwards is forbidden
     }
 
-    if (can_pawn_en_passant_to(from, to, moving_player, state)) {
+    struct coord en_passant_captured_pawn_pos = INVALID_COORD_STRUCT;
+    if (can_pawn_en_passant_to(from, to, moving_player, state, &en_passant_captured_pawn_pos)) {
         state->previous_move.extra_infos.piece_type = PAWN;
         state->previous_move.extra_infos.infos.pawn_infos = (struct pawn_move_infos) {
             .en_passant = true,
+            .en_passant_captured_pawn_pos = en_passant_captured_pawn_pos,
             .has_en_passant_extra_ep_notation = false,
             .promoted = false,
             .promotion_piece = EMPTY_SQUARE

@@ -40,6 +40,7 @@ enum check_type {
 
 struct pawn_move_infos {
     bool en_passant;
+    struct coord en_passant_captured_pawn_pos;
     bool has_en_passant_extra_ep_notation;
     bool promoted;
     enum piece_type promotion_piece;
@@ -50,7 +51,8 @@ extern const struct pawn_move_infos EMPTY_PAWN_MOVE_INFOS;
 enum castling {
     KINGSIDE,
     QUEENSIDE,
-    CASTLING_SIZE // size of an array defined as { [KINGSIDE] = ..., [QUEENSIDE] = ... }
+    CASTLING_SIZE, // size of an array defined as { [KINGSIDE] = ..., [QUEENSIDE] = ... }
+    INVALID_CASTLING = CASTLING_SIZE
 };
 
 struct king_move_infos {
@@ -168,7 +170,6 @@ void free_board_state(struct board_state* state);
 struct board_state copy_board_state(const struct board_state* state);
 
 void next_turn(struct board_state* state);
-bool apply_move(struct board_state* state, const struct move* move);
 
 bool board_start_alternative_moves(struct board_state* state);
 bool board_end_alternative_moves(struct board_state* state);

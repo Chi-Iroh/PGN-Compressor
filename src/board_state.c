@@ -93,7 +93,7 @@ bool board_start_alternative_moves(struct board_state* state) {
     memcpy(prev_board, state->previous_board, sizeof(board));
     memcpy(state->previous_board, state->board, sizeof(board));
     memcpy(state->board, prev_board, sizeof(board));
-    print_board(state->board);
+    print_board(state->board, stdout);
 
     if (state->current_player == WHITE) { // if white must play at the nth turn, then the last move was a previous turn
         state->move_turn--;
@@ -154,38 +154,3 @@ static bool is_in_check(struct board_state* state, enum player player, struct co
     }
     return false;
 }
-
-bool apply_move(struct board_state* state, const struct move* move) {
-    ASSERT_PRINTF(state != NULL, "Board state is NULL !");
-    ASSERT_PRINTF(move != NULL, "Move is NULL !");
-    ASSERT_PRINTF(state->current_player == move->player, "Bad player (%s instead of %s) !", PLAYER_NAMES[move->player], PLAYER_NAMES[state->current_player]);
-
-    if (!can_move_to[move->piece](move->from, move->to, move->player, state)) {
-        return false;
-    }
-
-    struct piece* const from = board_at_coord(state->board, move->from);
-    struct piece* const to = board_at_coord(state->board, move->to);
-    const struct piece copy_to = *to;
-    *to = *from;
-    *from = (struct piece) {
-        .player = INVALID_PLAYER,
-        .type = EMPTY_SQUARE
-    };
-
-    struct coord checking_piece_coord;
-    if (is_in_check(state, move->player, &checking_piece_coord)) {
-        *from = *to; // moving back the piece to its starting square
-        *to = copy_to;
-        return false;
-    }
-
-    state->current_player = opponent_player(state->current_player);
-    if (state->current_player == WHITE) {
-        state->move_turn++;
-    }
-    state->previous_move = *move;
-    return true;
-}
-
-

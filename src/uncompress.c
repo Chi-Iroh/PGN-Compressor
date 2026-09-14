@@ -308,7 +308,7 @@ static bool parse_alternative_moves(struct compressed_buf* buf, struct board_sta
     LOG_FROM(LOC_HERE, "Beginning of alternative moves");
     ASSERT_PRINTF_EXIT_FAILURE(board_start_alternative_moves(state), "Cannot start alternative moves sequence !");
     LOG("Previous board :");
-    print_board(state->board);
+    print_board(state->board, stdout);
     while (true) {
         if (parse_move(buf, state, token) != TRUE) {
             return false;
@@ -319,6 +319,36 @@ static bool parse_alternative_moves(struct compressed_buf* buf, struct board_sta
         }
     }
     return true;
+}
+
+static struct extra_infos empty_extra_infos(enum piece_type piece) {
+    if (piece == KING) {
+        return (struct extra_infos) {
+            .piece_type = KING,
+            .infos = {
+                .king_infos = {
+                    .is_castling = false,
+                    .castling = INVALID_CASTLING
+                }
+            }
+        };
+    } else if (piece == PAWN) {
+        return (struct extra_infos) {
+            .piece_type = PAWN,
+            .infos = {
+                .pawn_infos = {
+                    .en_passant = false,
+                    .en_passant_captured_pawn_pos = INVALID_COORD_STRUCT,
+                    .has_en_passant_extra_ep_notation = false,
+                    .promoted = false,
+                    .promotion_piece = EMPTY_SQUARE
+                }
+            }
+        };
+    }
+    return (struct extra_infos) {
+        .piece_type = EMPTY_SQUARE
+    };
 }
 
 static bool parse_move_impl(struct compressed_buf* buf, struct board_state* state, struct pgn_token* token) {
@@ -333,7 +363,7 @@ static bool parse_move_impl(struct compressed_buf* buf, struct board_state* stat
     LOG("file: %c (raw: %d) // rank: %d (raw: %d)\n", 'a' + file, file, 1 + rank, rank);
 
     if (token->move.move.piece == PAWN) {
-        check_for_en_passant(&token->move.move, state);
+        check_if_is_en_passant(&token->move.move, state);
     }
     puts("Prev move__ :");
     print_move(&state->previous_move, stdout);
@@ -342,7 +372,7 @@ static bool parse_move_impl(struct compressed_buf* buf, struct board_state* stat
     const uint8_t count = count_how_many_pieces_of_same_type_can_move_to_square(state, state->current_player, token->move.move.piece, &token->move.move.to, coords);
     LOG("%s: %hhu piece%s can move to the square %c%hhu\n", PLAYER_NAMES[state->current_player], count, count >= 2 ? "s" : "", 'a' + token->move.move.to.file, 1 + token->move.move.to.rank);
     if (count == 0) {
-        print_board(state->board);
+        print_board(state->board, stdout);
         abort();
     }
 
@@ -362,6 +392,8 @@ static bool parse_move_impl(struct compressed_buf* buf, struct board_state* stat
     struct board_state copy = copy_board_state(state);
     apply_move_token(token, &copy);
     token->move.move.check = is_player_checked(&copy, opponent_player(state->current_player), true);
+
+    token->move.move.extra_infos = empty_extra_infos(token->move.move.piece);
     return true;
 }
 

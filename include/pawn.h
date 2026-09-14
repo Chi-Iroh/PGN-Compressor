@@ -18,4 +18,4 @@ bool can_pawn_move_to(struct coord from, struct coord to, enum player moving_pla
 /**
  * Checks if the current move is en passant, and sets move->extra_infos.infos.pawn_infos accordingly
  */
-void check_for_en_passant(struct move* move, struct board_state* state);
+void check_if_is_en_passant(struct move* move, struct board_state* state);
