@@ -7,6 +7,10 @@
 #include "../include/rook.h"
 
 bool can_queen_move_to(struct coord from, struct coord to, enum player moving_player, struct board_state* state) {
+    if (are_pieces_equal((const struct piece*)&from, (const struct piece*)&to)) {
+        return false;
+    }
+
     return can_bishop_move_to(from, to, moving_player, state) || can_rook_move_to(from, to, moving_player, state);
 }
 

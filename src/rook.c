@@ -4,6 +4,10 @@
 #include "../include/parse.h"
 
 bool can_rook_move_to(struct coord from, struct coord to, enum player moving_player, struct board_state* state) {
+    if (are_pieces_equal((const struct piece*)&from, (const struct piece*)&to)) {
+        return false;
+    }
+
     const bool same_rank = from.rank == to.rank;
     const bool same_file = from.file == to.file;
 

@@ -132,6 +132,10 @@ void check_if_is_en_passant(struct move* move, struct board_state* state) {
 }
 
 bool can_pawn_move_to(struct coord from, struct coord to, enum player moving_player, struct board_state* state) {
+    if (are_pieces_equal((const struct piece*)&from, (const struct piece*)&to)) {
+        return false;
+    }
+
     if (moving_player == WHITE && to.rank < from.rank) {
         return false; // moving backwards is forbidden
     } else if (moving_player == BLACK && to.rank > from.rank) {

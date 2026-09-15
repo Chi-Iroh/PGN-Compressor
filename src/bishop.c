@@ -5,6 +5,10 @@
 #include "../include/parse.h"
 
 bool can_bishop_move_to(struct coord from, struct coord to, enum player moving_player, struct board_state* state) {
+    if (are_pieces_equal((const struct piece*)&from, (const struct piece*)&to)) {
+        return false;
+    }
+
     const int file_diff = to.file - from.file;
     const int rank_diff = to.rank - from.rank;
 

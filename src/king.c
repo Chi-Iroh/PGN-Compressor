@@ -8,6 +8,10 @@
 #include "../include/piece.h"
 
 bool can_king_move_to(struct coord from, struct coord to, enum player moving_player, struct board_state* state, bool check_is_is_dest_square_safe) {
+    if (are_pieces_equal((const struct piece*)&from, (const struct piece*)&to)) {
+        return false;
+    }
+
     if (abs(from.file - to.file) > 1 || abs(from.rank - to.rank) > 1) {
         return false; // king can only move 1 square
     } else if (board_at_coord(state->board, to)->type != EMPTY_SQUARE) {
