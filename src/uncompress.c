@@ -526,12 +526,12 @@ int uncompress(const struct args* args) {
 
         if (is_token_move(token.type)) {
             printf("Cur ply from player %s and Prev ply from player %s\n", PLAYER_NAMES[token.move.move.player], PLAYER_NAMES[board_state.previous_move.player]);
+            next_turn(&board_state);
+            has_moves = true;
         } else {
             puts("Current token isn't a move, state is unchanged !");
         }
 
-        next_turn(&board_state);
-        has_moves = true;
         free_token(&token);
 
         printf("Next ply (turn %d) with player %s.\n", board_state.move_turn, PLAYER_NAMES[board_state.current_player]);
