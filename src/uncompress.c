@@ -245,6 +245,62 @@ static bool parse_comment(struct compressed_buf* buf, struct pgn_token* token) {
     return true;
 }
 
+// @param nth_promotion_path 0 = closest to A file
+static struct coord promotion_destination(struct coord pawn, enum player current_player, board board, struct compressed_buf* buf) {
+    // Moving to the promotion rank
+    if (pawn.rank == 1) {
+        pawn.rank = 0;
+    } else if (pawn.rank == 6) {
+        pawn.rank = 7;
+    } else {
+        FAIL("Cannot promote pawn from rank %d (1-based) !", pawn.rank + 1);
+    }
+
+    const int starting_file = pawn.file;
+    if (pawn.file > 0) {
+        pawn.file--; // if can capture to the left, we should try that. Otherwise, just go forward
+    }
+
+    uint8_t ways_to_promote = 0;
+    uint8_t promotion_files[3];
+
+    // check if can promote on the left, forward, or on the right
+    for (int i = 1; i <= 3; i++) { // at most 3 ways to capture
+        struct piece* const piece = board_at_coord(board, pawn);
+
+        if (
+            // If empty square, must be in front of the pawn
+            (piece->type == EMPTY_SQUARE && pawn.file == starting_file) ||
+            // If isn't empty, must be a non-king enemy piece on a side file (left or right)
+            (piece->player == opponent_player(current_player) && piece->type != KING && abs(starting_file - pawn.file) == 1)
+        ) {
+            // can promote this way
+            ways_to_promote++;
+            promotion_files[i - 1] = pawn.file;
+        }
+
+        if (pawn.file == 7) { // stay within board bounds
+            break;
+        }
+        pawn.file++;
+    }
+
+    ASSERT_PRINTF_EXIT_PROGRAM(ways_to_promote > 0, "No valid move to promote !");
+
+    uint8_t nth_promotion_path = 0;
+    if (ways_to_promote >= 2) {
+        // 1 bit for 2 paths
+        // 2 bits for 3 paths
+        // No more than 3 paths possible
+        const uint8_t n_promotion_bits = 1 + (ways_to_promote == 3);
+        LOG("%" PRIu8 " way(s) to promote, must read %" PRIu8 " additional bits.", ways_to_promote, n_promotion_bits);
+        ASSERT_PRINTF_EXIT_PROGRAM(read_n_bits(buf, n_promotion_bits, &nth_promotion_path), "Cannot read promotion path bits !");
+    }
+
+    pawn.file = promotion_files[nth_promotion_path];
+    return pawn;
+}
+
 static bool parse_promotion(struct compressed_buf* buf, struct board_state* state, struct pgn_token* token) {
     struct coord pawn_coords[BOARD_SIZE];
     const uint8_t pawns_ready_to_promote = count_pawns_ready_to_promote(state->board, state->current_player, pawn_coords);
@@ -274,14 +330,19 @@ static bool parse_promotion(struct compressed_buf* buf, struct board_state* stat
         fprintf(stderr, "Cannot determine which pawn is being promoted !\n");
         return false;
     }
+
+    const struct coord dest_coord = promotion_destination(pawn, state->current_player, state->board, buf);
+    struct piece* const dest_piece = board_at_coord(state->board, dest_coord);
+
     *token = (struct pgn_token) {
         .type = PROMOTION,
         .move = {
             .move = (struct move) {
-                .capture = false, /* must be checked ! */
+                .capture = dest_piece->type != EMPTY_SQUARE,
                 .from = pawn,
-                .to = pawn, /* must determine destination ! think about cases where the same pawn can capture twice or just go forward, 3 possibilities then !*/
+                .to = dest_coord,
                 .player = state->current_player,
+                .piece = PAWN,
                 .extra_infos = {
                     .piece_type = PAWN,
                     .infos = {

@@ -38,6 +38,17 @@ void apply_move_impl(const struct pgn_token* token, board board) {
     }
 }
 
+void apply_promotion(const struct pgn_token* token, board board) {
+    *board_at_coord(board, token->move.move.from) = (struct piece) {
+        .type = EMPTY_SQUARE,
+        .player = INVALID_PLAYER
+    };
+    *board_at_coord(board, token->move.move.to) = (struct piece) {
+        .type = token->move.move.extra_infos.infos.pawn_infos.promotion_piece,
+        .player = token->move.move.player
+    };
+}
+
 void apply_move(const struct pgn_token* token, board board) {
     switch (token->type) {
         case MOVE_BISHOP:
@@ -52,6 +63,9 @@ void apply_move(const struct pgn_token* token, board board) {
         case CASTLING:
             apply_castling(token, board);
             return;
+
+        case PROMOTION:
+            apply_promotion(token, board);
 
         default:
             return;

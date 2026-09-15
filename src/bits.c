@@ -110,9 +110,10 @@ uint8_t* read_bytes_until_nul_terminator(struct compressed_buf* buf, size_t* siz
     size_t len;
     const enum safe_bool ret = memchr_bits(buf, 0, &len);
     if (ret != TRUE) {
-        fprintf(stderr, "Error while reading tag name (returned %d) !\n", ret);
-        return NULL;
+        ;
     }
+    ASSERT_PRINTF_NULL(ret == TRUE, "Cannot find string null terminator in compressed buffer (returned %d) !\n", ret);
+
     *size = len;
     return read_n_bytes(buf, len + 1); // +1 to include the NUL terminator
 }
