@@ -7,33 +7,51 @@
 #include "../include/log.h"
 #include "../include/strings.h"
 
-void print_move(const struct move* move, FILE* file) {
-    LOG("%s", PIECES_NAME[move->piece]);
+static void _print_move(const struct move* move, FILE* file) {
+    char buf[32] = { 0 };
+    char* head = buf;
+    char* to_print = buf;
+
     if (move->piece == KING && move->extra_infos.infos.king_infos.is_castling) {
-        fputs(move->extra_infos.infos.king_infos.castling == KINGSIDE ? "O-O\n" : "O-O-O\n", file);
-        return;
+        to_print = move->extra_infos.infos.king_infos.castling == KINGSIDE ? "O-O\n" : "O-O-O\n";
+        goto show;
     }
 
     if (move->piece != PAWN) {
-        fputc(PIECE_CHAR[move->piece], file);
+        *head++ = PIECE_CHAR[move->piece];
     }
     if (move->capture) {
         if (move->piece == PAWN) {
-            fputc('a' + move->from.file, file);
+            *head++ = 'a' + move->from.file;
         }
-        fputc('x', file);
+        *head++ = 'x';
     }
-    fputc(FILE_NAMES[move->to.file], file);
-    fprintf(file, "%hhu", move->to.rank + 1);
+    *head++ = FILE_NAMES[move->to.file];
+    head += sprintf(head, "%hhu", move->to.rank + 1);
     if (move->piece == PAWN && move->extra_infos.infos.pawn_infos.promoted) {
-        fputc('=', file);
-        fputc(PIECE_CHAR[move->extra_infos.infos.pawn_infos.promotion_piece], file);
+        *head++ = '=';
+        *head++ = PIECE_CHAR[move->extra_infos.infos.pawn_infos.promotion_piece];
     }
-    fputs(CHECK_STRING[move->check], file);
+    head += sprintf(head, "%s", CHECK_STRING[move->check]);
     if (move->piece == PAWN && move->extra_infos.infos.pawn_infos.en_passant && move->extra_infos.infos.pawn_infos.has_en_passant_extra_ep_notation) {
-        fputs(" e.p.", file);
+        head += sprintf(head, " e.p.");
     }
-    fputc('\n', file);
+
+show:
+    if (file == NULL) {
+        LOG("%s", to_print);
+    } else {
+        fputs(to_print, file);
+        fputc('\n', file);
+    }
+}
+
+void print_move(const struct move* move, FILE* file) {
+    _print_move(move, file);
+}
+
+void log_move(const struct move* move) {
+    _print_move(move, NULL);
 }
 
 void print_pgn_token(struct pgn_token* token, FILE* file) {

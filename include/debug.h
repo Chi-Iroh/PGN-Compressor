@@ -7,6 +7,7 @@
 #include "uncompress.h"
 
 void print_move(const struct move* move, FILE* file);
+void log_move(const struct move* move);
 void print_pgn_token(struct pgn_token* token, FILE* file);
 void print_board(board board, FILE* file);
 void read_board(board dest, char board_str[BOARD_SIZE][BOARD_SIZE + 1]);

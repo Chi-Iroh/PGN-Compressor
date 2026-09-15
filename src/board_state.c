@@ -117,8 +117,8 @@ bool board_end_alternative_moves(struct board_state* state, struct pgn_token* to
     state->move_turn = prev_state.move_turn;
     state->current_player = prev_state.current_player;
     state->previous_move = prev_state.previous_move;
-    puts("Popped move:");
-    print_move(&state->previous_move, stdout);
+    LOG("Popped move:");
+    log_move(&state->previous_move);
     memcpy(state->board, prev_state.board, sizeof(board));
 
     *token = (struct pgn_token) {
