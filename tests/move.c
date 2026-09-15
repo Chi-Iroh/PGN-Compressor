@@ -22,7 +22,9 @@ struct pgn_token move_to_token(struct move* move) {
     const bool castling = move->piece == KING && move->extra_infos.piece_type == KING && move->extra_infos.infos.king_infos.is_castling;
     return (struct pgn_token) {
         .type = castling ? CASTLING : piece_to_token_type(move->piece),
-        .move = *move
+        .move = {
+            .move = *move
+        }
     };
 }
 
