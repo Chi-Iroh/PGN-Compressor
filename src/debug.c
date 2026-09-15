@@ -67,11 +67,15 @@ void print_pgn_token(struct pgn_token* token, FILE* file) {
 }
 
 void print_board(board board, FILE* file) {
-    fputs("WHITE = UPPERCASE, black = lowercase\n", file);
-    fputs("   A B C D E F G H\n", file);
-    fputs("  +-+-+-+-+-+-+-+-+\n", file);
+    LOGFILE_NO_LOCATION(file, "WHITE = UPPERCASE, black = lowercase");
+    LOGFILE_NO_LOCATION(file, "   A B C D E F G H");
+    LOGFILE_NO_LOCATION(file, "  +-+-+-+-+-+-+-+-+");
+
     for (uint8_t rank = 0; rank < BOARD_SIZE; rank++) {
-        fprintf(file, "%" PRIu8 " |", rank + 1);
+        char line_buf[64] = { 0 };
+        char* line_head = line_buf;
+
+        line_head += sprintf(line_head, "%" PRIu8 " |", rank + 1);
         for (uint8_t _file = 0; _file < BOARD_SIZE; _file++) {
             const struct piece* piece = board_at(board, _file, rank);
             char piece_char;
@@ -85,12 +89,12 @@ void print_board(board board, FILE* file) {
             if (piece->player == BLACK) {
                 piece_char = tolower(piece_char);
             }
-            fprintf(file, "%c|", piece_char);
+            line_head += sprintf(line_head, "%c|", piece_char);
         }
-        fputc('\n', file);
-        fputs("  +-+-+-+-+-+-+-+-+\n", file);
+        LOGFILE_NO_LOCATION(file, "%s", line_buf);
+        LOGFILE_NO_LOCATION(file, "  +-+-+-+-+-+-+-+-+");
     }
-    fputs("   A B C D E F G H\n", file);
+    LOGFILE_NO_LOCATION(file, "   A B C D E F G H");
 }
 
 void read_board(board dest, char board_str[BOARD_SIZE][BOARD_SIZE + 1]) {

@@ -56,24 +56,19 @@ static bool can_pawn_en_passant_to(struct coord from, struct coord to, enum play
         return false;
     }
 
-    printf("EN PASSANT CHECK, from %c%i to %c%i\n", 'A' + from.file, 1 + from.rank, 'A' + to.file, 1 + to.rank);
     const int forward = (moving_player == WHITE) ? 1 : -1;
     if (from.rank + forward != to.rank) { // an en passant is always a capture
-        puts("1");
         return false;
     } if (abs(from.file - to.file) != 1) {
-        puts("2");
         return false;
     }
 
     if (moving_player == WHITE) {
         if (from.rank != 4) {
-            puts("3");
             return false; // White pawns can only en passant on the 5th rank
         }
     } else if (moving_player == BLACK) {
         if (from.rank != 3) {
-            puts("4");
             return false; // Black pawns can only en passant on the 4th rank
         }
     }
@@ -87,31 +82,18 @@ static bool can_pawn_en_passant_to(struct coord from, struct coord to, enum play
             const struct move* last_move = &state->previous_move;
             const int opponent_forward = (last_move->player == WHITE) ? 1 : -1;
             if (last_move->player != opponent) {
-                printf("Expected last move played by %s but was %s instead\n", PLAYER_NAMES[last_move->player], PLAYER_NAMES[opponent]);
-                puts("DEBUG bad move:");
-                print_move(last_move, stdout);
-                puts("5");
                 return false; // Last move wasn't the opponent's
             } else if (last_move->piece != PAWN) {
-                puts("6");
                 return false; // No pawn moved last turn
             } else if (!are_coords_equal(&last_move->to, &nearby_pawn)) {
-                puts("7");
                 return false; // Cannot en passant anymore, that pawn didn't move the last turn
             } else if (!are_coords_equal(&last_move->from, &(struct coord){ .file = nearby_pawn.file, .rank = nearby_pawn.rank - 2 * opponent_forward })) {
-                printf("Last move started from %c%i instead of mandatory %c%i\n", 'A' + last_move->from.file, 1 + last_move->from.rank, 'A' + nearby_pawn.file, 1 + nearby_pawn.rank - 2 * forward);
-                puts("8");
                 return false; // Cannot en passant anymore, that pawn didn't move 2 squares the last turn
             }
             *captured_pawn = nearby_pawn;
             return true;
-        } else {
-            puts("Dest square isn't empty !");
         }
-    } else {
-        puts("No enemy pawn nearby to capture with en passant !");
     }
-    puts("9");
     return false;
 }
 
@@ -154,11 +136,6 @@ bool can_pawn_move_to(struct coord from, struct coord to, enum player moving_pla
             .promotion_piece = EMPTY_SQUARE
         };
         return true;
-    }
-
-    if (from.file == 4 && from.rank == 4) {
-        puts("E5 Prev move can_pawn_move_to :");
-        print_move(&state->previous_move, stdout);
     }
 
     const int rank_diff = abs(from.rank - to.rank);

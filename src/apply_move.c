@@ -72,24 +72,12 @@ void apply_move(const struct pgn_token* token, board board) {
     }
 }
 
-void apply_move_token(const struct pgn_token* token, struct board_state* state, bool log_text) {
+void apply_move_token(const struct pgn_token* token, struct board_state* state) {
     memcpy(state->previous_board, state->board, sizeof(board));
-    if (log_text) {
-        LOG_FROM(LOC_HERE, "Saving board :");
-        print_board(state->previous_board, stdout);
-    }
     apply_move(token, state->board);
 
-    if (is_token_move(token->type)) { // do not alter previous move when token is a non-move token (comment for instance)
+    // do not alter previous move when token is a non-move token (comment for instance)
+    if (is_token_move(token->type)) {
         state->previous_move = token->move.move;
-    }
-    if (log_text) {
-        printf("Prev ply from player %s\n", PLAYER_NAMES[state->previous_move.player]);
-        puts("Prev move :");
-        print_move(&state->previous_move, stdout);
-        print_token(token);
-        puts("---");
-        LOG_FROM(LOC_HERE, "Board after move :");
-        print_board(state->board, stdout);
     }
 }

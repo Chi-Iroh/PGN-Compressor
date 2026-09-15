@@ -145,7 +145,7 @@ void free_tags(struct tag** tags, size_t* n_tags, size_t* max_tags) {
 static bool does_move_cause_check(struct board_state* state, struct pgn_token* token) {
     // we must apply the move before calling is_player_checked, but we do it on a temp board, as the move is applied in the main uncompressing loop
     struct board_state copy = copy_board_state(state);
-    apply_move_token(token, &copy, false /* no log for copy */);
+    apply_move_token(token, &copy);
     return is_player_checked(&copy, opponent_player(state->current_player), true);
 }
 
@@ -378,8 +378,7 @@ static bool parse_alternative_moves(struct compressed_buf* buf, struct board_sta
     }
     LOG_FROM(LOC_HERE, "Beginning of alternative moves");
     ASSERT_PRINTF_EXIT_FAILURE(board_start_alternative_moves(state), "Cannot start alternative moves sequence !");
-    LOG("Previous board :");
-    print_board(state->board, stdout);
+
     while (true) {
         if (parse_move(buf, state, token) != TRUE) {
             return false;
@@ -433,13 +432,11 @@ static bool parse_move_impl(struct compressed_buf* buf, struct board_state* stat
     LOG("A %s %s (%d) is moving", (state->current_player == WHITE ? "white" : "black"), PIECES_NAME[token->move.move.piece], token->move.move.piece);
     LOG("file: %c (raw: %d) // rank: %d (raw: %d)\n", 'a' + file, file, 1 + rank, rank);
 
-    puts("Prev move__ :");
-    print_move(&state->previous_move, stdout);
-
     struct coord coords[8];
     const uint8_t count = count_how_many_pieces_of_same_type_can_move_to_square(state, state->current_player, token->move.move.piece, &token->move.move.to, coords);
     LOG("%s: %hhu %s%s can move to the square %c%hhu\n", PLAYER_NAMES[state->current_player], count, PIECES_NAME[token->move.move.piece], count >= 2 ? "s" : "", 'a' + token->move.move.to.file, 1 + token->move.move.to.rank);
     if (count == 0) {
+        LOG("Current board :");
         print_board(state->board, stdout);
         abort();
     }
@@ -573,7 +570,8 @@ int uncompress(const struct args* args) {
     struct board_state board_state = empty_board_state();
     struct pgn_token token;
     enum safe_bool state;
-    printf("First ply with player %s.\n", PLAYER_NAMES[board_state.current_player]);
+
+    LOG("First ply with player %s.\n", PLAYER_NAMES[board_state.current_player]);
     while (!is_buf_empty(&buf)) {
         if ((state = parse_move(&buf, &board_state, &token)) != TRUE) {
             break;
@@ -583,19 +581,20 @@ int uncompress(const struct args* args) {
             free_token(&token);
             break;
         }
-        apply_move_token(&token, &board_state, true);
+        apply_move_token(&token, &board_state);
 
         if (is_token_move(token.type)) {
-            printf("Cur ply from player %s and Prev ply from player %s\n", PLAYER_NAMES[token.move.move.player], PLAYER_NAMES[board_state.previous_move.player]);
+            LOG("Cur ply from player %s and Prev ply from player %s\n", PLAYER_NAMES[token.move.move.player], PLAYER_NAMES[board_state.previous_move.player]);
             next_turn(&board_state);
             has_moves = true;
         } else {
-            puts("Current token isn't a move, state is unchanged !");
+            LOG("Current token isn't a move, state is unchanged !");
         }
 
         free_token(&token);
 
-        printf("Next ply (turn %d) with player %s.\n", board_state.move_turn, PLAYER_NAMES[board_state.current_player]);
+        print_board(board_state.board, stdout);
+        LOG("Next ply (turn %d) with player %s.\n", board_state.move_turn, PLAYER_NAMES[board_state.current_player]);
     }
     if (state == ERROR) {
         status = false;
@@ -605,6 +604,5 @@ int uncompress(const struct args* args) {
     free_token(has_moves ? &token : NULL);
     free_tags(&tags, &n_tags, &max_tags);
     free(raw_buf);
-    LOG("%d\n", log_enabled);
     return status ? EXIT_SUCCESS : EXIT_FAILURE;
 }
