@@ -66,12 +66,14 @@ void apply_move_token(const struct pgn_token* token, struct board_state* state, 
     }
     apply_move(token, state->board);
 
-    state->previous_move = token->move.move;
+    if (is_token_move(token->type)) { // do not alter previous move when token is a non-move token (comment for instance)
+        state->previous_move = token->move.move;
+    }
     if (log_text) {
         printf("Prev ply from player %s\n", PLAYER_NAMES[state->previous_move.player]);
         puts("Prev move :");
         print_move(&state->previous_move, stdout);
-        print_move(&token->move.move, stdout);
+        print_token(token);
         puts("---");
         LOG_FROM(LOC_HERE, "Board after move :");
         print_board(state->board, stdout);

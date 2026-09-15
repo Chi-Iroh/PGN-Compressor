@@ -133,6 +133,8 @@ enum token_type {
     END_OF_THE_GAME = _0b11111,
 };
 
+bool is_token_move(enum token_type type);
+
 struct pgn_token {
     enum token_type type;
     union {

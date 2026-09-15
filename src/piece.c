@@ -57,3 +57,21 @@ bool are_coords_equal(const struct coord* first, const struct coord* second) {
     ASSERT_PRINTF_EXIT_PROGRAM(second != NULL, "Second object is NULL !");
     return memcmp(first, second, sizeof(struct coord)) == 0;
 }
+
+bool is_token_move(enum token_type type) {
+    switch (type) {
+        case MOVE_KING:
+        case MOVE_QUEEN:
+        case MOVE_BISHOP:
+        case MOVE_KNIGHT:
+        case MOVE_ROOK:
+        case MOVE_PAWN:
+        case CASTLING:
+        case PROMOTION:
+        case ALTERNATIVE_MOVE:
+            return true;
+
+        default:
+            return false;
+    }
+}

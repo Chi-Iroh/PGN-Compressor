@@ -142,6 +142,13 @@ void free_tags(struct tag** tags, size_t* n_tags, size_t* max_tags) {
     *max_tags = 0;
 }
 
+static bool does_move_cause_check(struct board_state* state, struct pgn_token* token) {
+    // we must apply the move before calling is_player_checked, but we do it on a temp board, as the move is applied in the main uncompressing loop
+    struct board_state copy = copy_board_state(state);
+    apply_move_token(token, &copy, false /* no log for copy */);
+    return is_player_checked(&copy, opponent_player(state->current_player), true);
+}
+
 static bool parse_castling(struct compressed_buf* buf, struct board_state* state, struct pgn_token* token) {
     uint8_t castling_bit;
     if (!read_n_bits(buf, 1, &castling_bit)) {
@@ -289,6 +296,7 @@ static bool parse_promotion(struct compressed_buf* buf, struct board_state* stat
             }
         }
     };
+    token->move.move.check = does_move_cause_check(state, token);
     return true;
 }
 
@@ -386,11 +394,7 @@ static bool parse_move_impl(struct compressed_buf* buf, struct board_state* stat
     token->move.move.from = *coord;
     LOG("The moves comes from %c%hhu", 'a' + coord->file, 1 + coord->rank);
     token->move.move.piece = board_at_coord(state->board, *coord)->type;
-
-    // we must apply the move before calling is_player_checked, but we do it on a temp board, as the move is applied in the main uncompressing loop
-    struct board_state copy = copy_board_state(state);
-    apply_move_token(token, &copy, false /* no log for copy */);
-    token->move.move.check = is_player_checked(&copy, opponent_player(state->current_player), true);
+    token->move.move.check = does_move_cause_check(state, token);
 
     token->move.move.extra_infos = empty_extra_infos(token->move.move.piece);
     if (token->move.move.piece == PAWN) {
@@ -519,14 +523,17 @@ int uncompress(const struct args* args) {
             break;
         }
         apply_move_token(&token, &board_state, true);
-        board_state.previous_move = token.move.move;
 
-        printf("Cur ply from player %s and Prev ply from player %s\n", PLAYER_NAMES[token.move.move.player], PLAYER_NAMES[board_state.previous_move.player]);
+        if (is_token_move(token.type)) {
+            printf("Cur ply from player %s and Prev ply from player %s\n", PLAYER_NAMES[token.move.move.player], PLAYER_NAMES[board_state.previous_move.player]);
+        } else {
+            puts("Current token isn't a move, state is unchanged !");
+        }
 
         next_turn(&board_state);
         has_moves = true;
         free_token(&token);
-        printf("Previous ply with player %s.\n", PLAYER_NAMES[board_state.previous_move.player]);
+
         printf("Next ply (turn %d) with player %s.\n", board_state.move_turn, PLAYER_NAMES[board_state.current_player]);
     }
     if (state == ERROR) {
