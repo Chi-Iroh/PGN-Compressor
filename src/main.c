@@ -37,7 +37,7 @@ static const struct args EMPTY_ARGS = {
 };
 
 static void help(void) {
-    puts("./pgn_compressor -c|--compress|-u|--uncompress file [-o output]");
+    puts("./pgn_compressor [-h|--help] [--no-log] -c|--compress|-u|--uncompress file [-o output]");
 }
 
 static enum safe_bool parse_bool_arg(bool* flag, const char* flag_names[], size_t n_names, const char* arg) {
