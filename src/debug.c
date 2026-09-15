@@ -76,11 +76,11 @@ void print_pgn_token(struct pgn_token* token, FILE* file) {
         break;
 
     case ALTERNATIVE_MOVES_START:
-        fputc('(', file);
+        fputs("(\n", file);
         break;
 
     case ALTERNATIVE_MOVES_END:
-        fputc(')', file);
+        fputs(")\n", file);
         break;
 
     default:
