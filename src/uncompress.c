@@ -230,7 +230,7 @@ static bool parse_comment(struct compressed_buf* buf, struct pgn_token* token) {
         return false;
     }
     *token = (struct pgn_token) {
-        .type = CASTLING,
+        .type = COMMENT,
         .move = {
             .comment = comment
         }
