@@ -76,34 +76,38 @@ void next_turn(struct board_state* state) {
     }
 }
 
-bool board_start_alternative_moves(struct board_state* state) {
+bool board_start_alternative_moves(struct board_state* state, struct pgn_token* token) {
     ASSERT_PRINTF_RETURN_FALSE(!(state->move_turn == 0 && state->current_player == WHITE), "Cannot start an alternative moves sequence it no move was played !");
 
     LOG("ALTERNATIVE MOVES START !");
-    struct previous_board_state prev_state = {
+    struct previous_board_state current_state_to_save = {
         .move_turn = state->move_turn,
-        // The current player is the opponent of the one who played the last move (the move we want to change)
-        // Thus we must invert the player to make them play again
-        .current_player = opponent_player(state->current_player),
+        .current_player = state->current_player,
         .previous_move = state->previous_move // discards what the current player just moved
     };
-    memcpy(prev_state.board, state->board, sizeof(board));
+    memcpy(current_state_to_save.board, state->board, sizeof(board));
 
     board prev_board;
     memcpy(prev_board, state->previous_board, sizeof(board));
     memcpy(state->previous_board, state->board, sizeof(board));
     memcpy(state->board, prev_board, sizeof(board));
+
+    LOG("Last move cancelled, going back to board :");
     print_board(state->board, stdout);
 
     if (state->current_player == WHITE) { // if white must play at the nth turn, then the last move was a previous turn
         state->move_turn--;
     }
-    state->current_player = opponent_player(state->current_player);
+    state->current_player = opponent_player(state->current_player); // the last player plays again
 
-    return stack_previous_board_state_push(&state->previous_states, prev_state);
+    *token = (struct pgn_token) {
+        .type = ALTERNATIVE_MOVES_START
+    };
+
+    return stack_previous_board_state_push(&state->previous_states, current_state_to_save);
 }
 
-bool board_end_alternative_moves(struct board_state* state) {
+bool board_end_alternative_moves(struct board_state* state, struct pgn_token* token) {
     ASSERT_PRINTF_RETURN_FALSE(state->previous_states.size > 0, "No current alternative moves sequence !");
 
     struct previous_board_state prev_state;
@@ -116,6 +120,11 @@ bool board_end_alternative_moves(struct board_state* state) {
     puts("Popped move:");
     print_move(&state->previous_move, stdout);
     memcpy(state->board, prev_state.board, sizeof(board));
+
+    *token = (struct pgn_token) {
+        .type = ALTERNATIVE_MOVES_END
+    };
+
     return true;
 }
 

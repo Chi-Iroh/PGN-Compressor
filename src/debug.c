@@ -41,23 +41,28 @@ void print_pgn_token(struct pgn_token* token, FILE* file) {
     ASSERT_PRINTF_RETURN(file != NULL, "Output file is NULL !");
 
     switch (token->type) {
-    case CASTLING:
-        fprintf(file, "{%s}", token->move.comment);
+    case COMMENT:
+        fprintf(file, "{%s}\n", token->move.comment);
         break;
 
     case NAG:
-        fprintf(file, "$%" PRIu8, token->move.nag);
+        fprintf(file, "$%" PRIu8 "\n", token->move.nag);
         break;
 
     case CASTLING_OR_PROMOTION:
     case COMMENT_OR_ALTERNATIVE_MOVE_OR_NAG_OR_END_OF_GAME:
     case COMMENT_OR_ALTERNATIVE_MOVE:
     case NAG_OR_END_OF_THE_GAME:
+    case ALTERNATIVE_MOVE:
         fprintf(stderr, "Cannot print ambiguous token ! Got '%s' !\n", token_string[token->type]);
         break;
 
-    case ALTERNATIVE_MOVE:
-        fputc("()"[token->move.alternative_moves_is_end], file);
+    case ALTERNATIVE_MOVES_START:
+        fputc('(', file);
+        break;
+
+    case ALTERNATIVE_MOVES_END:
+        fputc(')', file);
         break;
 
     default:
@@ -140,59 +145,5 @@ void debug_print(struct en_passant* en_passant_header, struct tag* tags, size_t 
     printf("\n%zu tag%s%s\n", n_tags, n_tags > 1 ? "s" : "", n_tags > 0 ? " :" : "");
     for (size_t i = 0; tags != NULL && i < n_tags; i++) {
         printf("- '%s' : '%s'\n", tags[i].name, tags[i].value);
-    }
-}
-
-void print_token(const struct pgn_token* token) {
-    switch (token->type) {
-    case PROMOTION:
-        puts("Promotion");
-        goto print_move;
-
-    case CASTLING:
-        puts("Castling");
-        goto print_move;
-
-    print_move:
-    case MOVE_KING:
-    case MOVE_QUEEN:
-    case MOVE_BISHOP:
-    case MOVE_KNIGHT:
-    case MOVE_ROOK:
-    case MOVE_PAWN:
-        print_move(&token->move.move, stdout);
-        break;
-
-    case COMMENT:
-        printf("Comment '%s'\n", token->move.comment);
-        break;
-
-    case NAG:
-        printf("NAG %hhu\n", token->move.nag);
-        break;
-
-    case CASTLING_OR_PROMOTION:
-        puts("Castling / promotion");
-        break;
-
-    case COMMENT_OR_ALTERNATIVE_MOVE_OR_NAG_OR_END_OF_GAME:
-        puts("Comment / alternative move / NAG / end of the game");
-        break;
-
-    case COMMENT_OR_ALTERNATIVE_MOVE:
-        puts("Comment / alternative move");
-        break;
-
-    case NAG_OR_END_OF_THE_GAME:
-        puts("NAG / end of the game");
-        break;
-
-    case ALTERNATIVE_MOVE:
-        printf("%s of alternative moves\n", token->move.alternative_moves_is_end ? "End" : "Beginning");
-        break;
-
-    case END_OF_THE_GAME:
-        puts("End of the game");
-        break;
     }
 }

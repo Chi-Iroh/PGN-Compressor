@@ -23,3 +23,6 @@
 #define _0b11101 29
 #define _0b11110 30
 #define _0b11111 31
+
+#define _0b111010 58
+#define _0b111011 59

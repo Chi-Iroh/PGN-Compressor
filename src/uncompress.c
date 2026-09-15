@@ -374,21 +374,11 @@ static bool parse_alternative_moves(struct compressed_buf* buf, struct board_sta
     }
     if (extra_bit == 0) {
         LOG_FROM(LOC_HERE, "End of alternative moves");
-        return board_end_alternative_moves(state);
+        return board_end_alternative_moves(state, token);
+    } else {
+        LOG_FROM(LOC_HERE, "Beginning of alternative moves");
+        return board_start_alternative_moves(state, token);
     }
-    LOG_FROM(LOC_HERE, "Beginning of alternative moves");
-    ASSERT_PRINTF_EXIT_FAILURE(board_start_alternative_moves(state), "Cannot start alternative moves sequence !");
-
-    while (true) {
-        if (parse_move(buf, state, token) != TRUE) {
-            return false;
-        }
-        free_token(token);
-        if (token->type == ALTERNATIVE_MOVE && token->move.alternative_moves_is_end) {
-            break;
-        }
-    }
-    return true;
 }
 
 static struct extra_infos empty_extra_infos(enum piece_type piece) {
@@ -576,7 +566,7 @@ int uncompress(const struct args* args) {
         if ((state = parse_move(&buf, &board_state, &token)) != TRUE) {
             break;
         }
-        print_token(&token);
+        print_pgn_token(&token, stdout);
         if (token.type == END_OF_THE_GAME) {
             free_token(&token);
             break;

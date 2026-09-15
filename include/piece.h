@@ -129,6 +129,8 @@ enum token_type {
     NAG_OR_END_OF_THE_GAME = _0b1111,
     COMMENT = _0b11100,
     ALTERNATIVE_MOVE = _0b11101,
+    ALTERNATIVE_MOVES_START = _0b111011,
+    ALTERNATIVE_MOVES_END = _0b111010,
     NAG = _0b11110,
     END_OF_THE_GAME = _0b11111,
 };
@@ -173,8 +175,8 @@ struct board_state copy_board_state(const struct board_state* state);
 
 void next_turn(struct board_state* state);
 
-bool board_start_alternative_moves(struct board_state* state);
-bool board_end_alternative_moves(struct board_state* state);
+bool board_start_alternative_moves(struct board_state* state, struct pgn_token* token);
+bool board_end_alternative_moves(struct board_state* state, struct pgn_token* token);
 
 // ----------------------------------------------------------------------------
 
