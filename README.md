@@ -692,8 +692,8 @@ This game is encoded as :
 
 The above PGN has 328 bytes / characters (if all the moves are on a single line), thus 328 * 8 = 2624 bits (328 bytes).  
 Then the above table shows the file can be compressed in 1213 bits (151.625 bytes).  
-2624 / 1201 ~= 2.163
-1201 / 2624 ~= 0.4623
+2624 / 1213 ~= 2.163
+1213 / 2624 ~= 0.4623
 Thus this file is 2.163 times smaller when compressed (compressed size is about 46.23% of the uncompressed size).  
 Take note this ratio might change according to the file content, for instance if there are a bunch of checks, the ratio will increase (i.e. in `Qd2+`, the check is deduced and the `+` isn't encoded).  
 
