@@ -16,11 +16,12 @@ bool can_rook_move_to(struct coord from, struct coord to, enum player moving_pla
     int* start = same_rank ? &from.file : &from.rank;
     const int end = same_rank ? to.file : to.rank;
 
+    *start += increment; // skipping the moving piece starting position
     while (*start != end) {
         if (board_at_coord(state->board, from)->type != EMPTY_SQUARE) {
             return false; // rooks cannot jump over pieces
         }
-        start += increment;
+        *start += increment;
     }
     if (board_at_coord(state->board, to)->type != EMPTY_SQUARE) {
         return board_at_coord(state->board, to)->player != moving_player;
