@@ -14,8 +14,11 @@ bool can_king_move_to(struct coord from, struct coord to, enum player moving_pla
 
     if (abs(from.file - to.file) > 1 || abs(from.rank - to.rank) > 1) {
         return false; // king can only move 1 square
-    } else if (board_at_coord(state->board, to)->type != EMPTY_SQUARE) {
-        return false;
+    }
+
+    struct piece* const dest_piece = board_at_coord(state->board, to);
+    if (dest_piece->type != EMPTY_SQUARE && dest_piece->player == moving_player) {
+        return false; // cannot capture an ally piece
     }
 
     if (check_is_is_dest_square_safe) {
