@@ -89,11 +89,12 @@ s += queenside_castling
 s += pawn + square("a5")
 s += pawn + square("a3")
 s += pawn + square("a4")
+s += pawn + square("b4")
 s += pawn + square("b3")
 s += comment + text("En passant !!")
 s += king + square("d2")
 s += pawn + square("b2")
-s += rook + square("a2")
+s += rook + square("a1")
 
 s += promotion + promotion_queen + "" # only one pawn ready to promote
 s += "0" # has 2 choices (so  1 bit), either move forward to b1 or take a1, a1 is the smallest number so it's the 1st choice (index 0)
