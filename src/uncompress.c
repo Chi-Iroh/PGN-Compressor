@@ -157,6 +157,7 @@ static bool parse_castling(struct compressed_buf* buf, struct board_state* state
                 .player = state->current_player,
                 .from = king_starting_coords[state->current_player],
                 .to = king_ending_coords[state->current_player][castling],
+                .piece = PAWN,
                 .extra_infos = {
                     .piece_type = KING,
                     .infos = {
@@ -169,6 +170,7 @@ static bool parse_castling(struct compressed_buf* buf, struct board_state* state
             }
         }
     };
+    token->move.move.check = does_move_cause_check(state, token);
     return true;
 }
 
