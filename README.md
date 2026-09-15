@@ -631,7 +631,7 @@ graph TD
 Here is an example of a PGN which uses every aforementioned notation :  
 ```r
 [Date "Epoch: 01/01/1970"]
-1. e4 e6 2. e5 d5 e.p. (2... d6 {Avoids en passant}) 3. exd6 Qxd6 4. Qf3 Be7
+1. e4 e6 2. e5 d5 (2... d6 {Avoids en passant}) 3. exd6 e.p. Qxd6 4. Qf3 Be7
 5. d3 Nf6 6. Bg5 {Blunder, Qe5+ wins the bishop.} O-O 7. Nc3 Nd5 8. Bxe7 Nxe7
 9. O-O-O a5 10. a3 a4 11. b4 axb3 {En passant !!} 12. Kd2 b2
 13. Ra1 bxa1=Q $41 {Black has the attack} 14. a4 Qxc3+ 15. Kxc3 Nd5+ 16. Kc4 Qb4# 0-1
@@ -703,7 +703,7 @@ Comments and tags aren't compressed, so the more comments and tags there are in 
 
 Here's the above PGN without its comments and tags :
 ```r
-1. e4 e6 2. e5 d5 e.p. (2... d6) 3. exd6 Qxd6 4. Qf3 Be7
+1. e4 e6 2. e5 d5 (2... d6) 3. exd6 e.p. Qxd6 4. Qf3 Be7
 5. d3 Nf6 6. Bg5 O-O 7. Nc3 Nd5 8. Bxe7 Nxe7
 9. O-O-O a5 10. a3 a4 11. b4 axb3 12. Kd2 b2
 13. Ra1 bxa1=Q $41 14. a4 Qxc3+ 15. Kxc3 Nd5+ 16. Kc4 Qb4# 0-1
