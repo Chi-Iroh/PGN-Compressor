@@ -566,6 +566,9 @@ int uncompress(const struct args* args) {
         if ((state = parse_move(&buf, &board_state, &token)) != TRUE) {
             break;
         }
+        if (has_moves) {
+            putchar(' ');
+        }
         print_pgn_token(&token, stdout);
         if (token.type == END_OF_THE_GAME) {
             free_token(&token);

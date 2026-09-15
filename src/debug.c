@@ -10,12 +10,6 @@
 static void _print_move(const struct move* move, FILE* file) {
     char buf[32] = { 0 };
     char* head = buf;
-    char* to_print = buf;
-
-    if (move->piece == KING && move->extra_infos.infos.king_infos.is_castling) {
-        to_print = move->extra_infos.infos.king_infos.castling == KINGSIDE ? "O-O\n" : "O-O-O\n";
-        goto show;
-    }
 
     if (move->piece != PAWN) {
         *head++ = PIECE_CHAR[move->piece];
@@ -37,17 +31,18 @@ static void _print_move(const struct move* move, FILE* file) {
         head += sprintf(head, " e.p.");
     }
 
-show:
     if (file == NULL) {
-        LOG("%s", to_print);
+        LOG("%s", buf);
     } else {
-        fputs(to_print, file);
-        fputc('\n', file);
+        fputs(buf, file);
     }
 }
 
-void print_move(const struct move* move, FILE* file) {
+void print_move(const struct move* move, FILE* file, bool newline) {
     _print_move(move, file);
+    if (newline) {
+        fputc('\n', file);
+    }
 }
 
 void log_move(const struct move* move) {
@@ -60,11 +55,11 @@ void print_pgn_token(struct pgn_token* token, FILE* file) {
 
     switch (token->type) {
     case COMMENT:
-        fprintf(file, "{%s}\n", token->move.comment);
+        fprintf(file, "{%s}", token->move.comment);
         break;
 
     case NAG:
-        fprintf(file, "$%" PRIu8 "\n", token->move.nag);
+        fprintf(file, "$%" PRIu8, token->move.nag);
         break;
 
     case CASTLING_OR_PROMOTION:
@@ -72,19 +67,23 @@ void print_pgn_token(struct pgn_token* token, FILE* file) {
     case COMMENT_OR_ALTERNATIVE_MOVE:
     case NAG_OR_END_OF_THE_GAME:
     case ALTERNATIVE_MOVE:
-        fprintf(stderr, "Cannot print ambiguous token ! Got '%s' !\n", token_string[token->type]);
+        fprintf(stderr, "Cannot print ambiguous token ! Got '%s' !", token_string[token->type]);
         break;
 
     case ALTERNATIVE_MOVES_START:
-        fputs("(\n", file);
+        fputc('(', file);
         break;
 
     case ALTERNATIVE_MOVES_END:
-        fputs(")\n", file);
+        fputc(')', file);
+        break;
+
+    case CASTLING:
+        fputs(token->move.move.extra_infos.infos.king_infos.castling == KINGSIDE ? "O-O\n" : "O-O-O\n", file);
         break;
 
     default:
-        print_move(&token->move.move, file);
+        print_move(&token->move.move, file, false);
         break;
     }
 }
