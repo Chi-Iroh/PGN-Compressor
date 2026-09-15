@@ -1,4 +1,3 @@
-.vscode/
 *.o
 pgn_compressor
 pgn_compressor.exe
