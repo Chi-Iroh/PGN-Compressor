@@ -135,15 +135,6 @@ bool can_pawn_move_to(struct coord from, struct coord to, enum player moving_pla
 
     struct coord en_passant_captured_pawn_pos = INVALID_COORD_STRUCT;
     if (can_pawn_en_passant_to(from, to, moving_player, state, &en_passant_captured_pawn_pos)) {
-        //DUBIOUS: WHY prev move and not current move here ?
-        state->previous_move.extra_infos.piece_type = PAWN;
-        state->previous_move.extra_infos.infos.pawn_infos = (struct pawn_move_infos) {
-            .en_passant = true,
-            .en_passant_captured_pawn_pos = en_passant_captured_pawn_pos,
-            .has_en_passant_extra_ep_notation = false,
-            .promoted = false,
-            .promotion_piece = EMPTY_SQUARE
-        };
         return true;
     }
 
