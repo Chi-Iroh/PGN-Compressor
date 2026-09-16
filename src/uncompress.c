@@ -598,7 +598,6 @@ int uncompress(const struct args* args) {
     putchar('\n');
 
     free_board_state(&board_state);
-    free_token(has_moves ? &token : NULL);
     free_tags(&tags, &n_tags, &max_tags);
     free(raw_buf);
     return status ? EXIT_SUCCESS : EXIT_FAILURE;
