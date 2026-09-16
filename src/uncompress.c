@@ -595,6 +595,7 @@ int uncompress(const struct args* args) {
     if (state == ERROR) {
         status = false;
     }
+    putchar('\n');
 
     free_board_state(&board_state);
     free_token(has_moves ? &token : NULL);
