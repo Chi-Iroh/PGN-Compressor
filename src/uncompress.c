@@ -266,7 +266,7 @@ static struct coord promotion_destination(struct coord pawn, enum player current
     }
 
     uint8_t ways_to_promote = 0;
-    uint8_t promotion_files[3];
+    int promotion_files[3] = { INVALID_COORD, INVALID_COORD, INVALID_COORD };
 
     // check if can promote on the left, forward, or on the right
     for (int i = 1; i <= 3; i++) { // at most 3 ways to capture
