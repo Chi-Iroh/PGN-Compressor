@@ -106,10 +106,19 @@ void check_if_is_en_passant(struct move* move, struct board_state* state) {
     const bool en_passant = can_pawn_en_passant_to(move->from, move->to, move->player, state, &captured_pawn);
 
     if (en_passant) {
-        // FIXME: what about move->extra_infos.infos.pawn_infos.has_en_passant_extra_ep_notation ?
-        move->extra_infos.infos.pawn_infos.en_passant = true;
         move->capture = true;
-        move->extra_infos.infos.pawn_infos.en_passant_captured_pawn_pos = captured_pawn;
+        move->extra_infos = (struct extra_infos) {
+            .piece_type = PAWN,
+            .infos = {
+                .pawn_infos = (struct pawn_move_infos) {
+                    .en_passant = true,
+                    .en_passant_captured_pawn_pos = captured_pawn,
+                    .has_en_passant_extra_ep_notation = state->en_passant.has_en_passant_extra_ep_notation[state->en_passant.nth_en_passant++],
+                    .promoted = false,
+                    .promotion_piece = EMPTY_SQUARE
+                }
+            }
+        };
     }
 }
 

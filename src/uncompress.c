@@ -37,7 +37,11 @@ static bool parse_en_passant_header(struct compressed_buf* buf, struct en_passan
     if (!read_n_bits(buf, N_EN_PASSANT_BITS, &n_en_passant)) {
         return false;
     }
-    header->n_en_passant = n_en_passant;
+    *header = (struct en_passant) {
+        .has_en_passant_extra_ep_notation = { false },
+        .n_en_passant = n_en_passant,
+        .nth_en_passant = 0
+    };
 
     uint8_t has_extra_ep;
     for (uint8_t i = 0; i < n_en_passant; i++) {
@@ -541,7 +545,7 @@ int uncompress(const struct args* args) {
         .remaining_bits = size * 8
     };
     uint8_t version = 0;
-    struct en_passant en_passant_header;
+    struct board_state board_state = empty_board_state();
     struct tag* tags = NULL;
     size_t n_tags = 0;
     size_t max_tags;
@@ -552,12 +556,11 @@ int uncompress(const struct args* args) {
     LOG("After version, status %d\n", status);
     status = status && parse_tags(&buf, &tags, &n_tags, &max_tags);
     LOG("After tags, status: %d\n", status);
-    status = status && parse_en_passant_header(&buf, &en_passant_header);
+    status = status && parse_en_passant_header(&buf, &board_state.en_passant);
     LOG("After en passant, status: %d\n", status);
-    debug_print(&en_passant_header, tags, n_tags);
+    debug_print(&board_state.en_passant, tags, n_tags);
 
     bool has_moves = false;
-    struct board_state board_state = empty_board_state();
     struct pgn_token token;
     enum safe_bool state;
 
