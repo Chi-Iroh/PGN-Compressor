@@ -12,4 +12,6 @@ void log_move(const struct move* move);
 void print_pgn_token(struct pgn_token* token, FILE* file);
 void print_board(board board, FILE* file);
 void read_board(board dest, char board_str[BOARD_SIZE][BOARD_SIZE + 1]);
-void debug_print(struct en_passant* en_passant_header, struct tag* tags, size_t n_tags);
+
+void log_en_passant_header(struct en_passant* en_passant_header);
+void log_tags(struct tag* tags, size_t n_tags);

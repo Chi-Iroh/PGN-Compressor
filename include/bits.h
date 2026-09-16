@@ -47,4 +47,4 @@ uint8_t how_many_bits_to_hold_number(uint8_t n);
 /**
  * Prints binary buffer like xxd/hexdump.
  */
-void binary_print(const uint8_t* buf, size_t size);
+void log_binary_file(const char* filename, const uint8_t* buf, size_t size);

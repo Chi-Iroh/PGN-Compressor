@@ -79,7 +79,7 @@ void print_pgn_token(struct pgn_token* token, FILE* file) {
         break;
 
     case CASTLING:
-        fputs(token->move.move.extra_infos.infos.king_infos.castling == KINGSIDE ? "O-O\n" : "O-O-O\n", file);
+        fputs(token->move.move.extra_infos.infos.king_infos.castling == KINGSIDE ? "O-O" : "O-O-O", file);
         break;
 
     default:
@@ -147,20 +147,19 @@ void read_board(board dest, char board_str[BOARD_SIZE][BOARD_SIZE + 1]) {
     }
 }
 
-void debug_print(struct en_passant* en_passant_header, struct tag* tags, size_t n_tags) {
+void log_en_passant_header(struct en_passant* en_passant_header) {
     ASSERT_PRINTF_RETURN(en_passant_header != NULL, "En passant header is NULL !");
 
-    printf(
-        "En passant header :\n"
-        "- %u en passant\n",
-        en_passant_header->n_en_passant
-    );
+    LOG("En passant header :");
+    LOG_NO_LOCATION("- %u en passant", en_passant_header->n_en_passant);
     for (uint8_t i = 0; i < en_passant_header->n_en_passant; i++) {
-        printf("- En passant n°%" PRIu8 " %s extra e.p. notation\n", i, en_passant_header->has_en_passant_extra_ep_notation[i] ? "has" : "has not");
+        LOG_NO_LOCATION("- En passant n°%" PRIu8 " %s extra e.p. notation", i, en_passant_header->has_en_passant_extra_ep_notation[i] ? "has" : "has not");
     }
+}
 
-    printf("\n%zu tag%s%s\n", n_tags, n_tags > 1 ? "s" : "", n_tags > 0 ? " :" : "");
+void log_tags(struct tag* tags, size_t n_tags) {
+    LOG("%zu tag%s%s", n_tags, n_tags > 1 ? "s" : "", n_tags > 0 ? " :" : "");
     for (size_t i = 0; tags != NULL && i < n_tags; i++) {
-        printf("- '%s' : '%s'\n", tags[i].name, tags[i].value);
+        LOG_NO_LOCATION("- '%s' : '%s'", tags[i].name, tags[i].value);
     }
 }

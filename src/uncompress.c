@@ -424,11 +424,11 @@ static bool parse_move_impl(struct compressed_buf* buf, struct board_state* stat
     token->move.move.to.rank = rank;
     token->move.move.capture = board_at_coord(state->board, token->move.move.to)->type != EMPTY_SQUARE;
     LOG("A %s %s (%d) is moving", (state->current_player == WHITE ? "white" : "black"), PIECES_NAME[token->move.move.piece], token->move.move.piece);
-    LOG("file: %c (raw: %d) // rank: %d (raw: %d)\n", 'a' + file, file, 1 + rank, rank);
+    LOG("file: %c (raw: %d) // rank: %d (raw: %d)", 'a' + file, file, 1 + rank, rank);
 
     struct coord coords[8];
     const uint8_t count = count_how_many_pieces_of_same_type_can_move_to_square(state, state->current_player, token->move.move.piece, &token->move.move.to, coords);
-    LOG("%s: %hhu %s%s can move to the square %c%hhu\n", PLAYER_NAMES[state->current_player], count, PIECES_NAME[token->move.move.piece], count >= 2 ? "s" : "", 'a' + token->move.move.to.file, 1 + token->move.move.to.rank);
+    LOG("%s: %hhu %s%s can move to the square %c%hhu", PLAYER_NAMES[state->current_player], count, PIECES_NAME[token->move.move.piece], count >= 2 ? "s" : "", 'a' + token->move.move.to.file, 1 + token->move.move.to.rank);
     if (count == 0) {
         LOG("Current board :");
         print_board(state->board, stdout);
@@ -534,8 +534,7 @@ int uncompress(const struct args* args) {
         fprintf(stderr, "Error while reading %s\n", args->input);
         return 1;
     }
-    printf("Content of %s (%zu byte%s):\n", args->input, size, size >= 2 ? "s" : "");
-    binary_print(raw_buf, size);
+    log_binary_file(args->input, raw_buf, size);
 
     struct compressed_buf buf = {
         .buf = raw_buf,
@@ -552,19 +551,20 @@ int uncompress(const struct args* args) {
 
     bool status = true;
     status = status && parse_version(&buf, &version);
-    printf("Protocol v%" PRIx8 "\n", version);
-    LOG("After version, status %d\n", status);
+    LOG("Protocol v%" PRIx8, version);
+    LOG("After version, status %d", status);
     status = status && parse_tags(&buf, &tags, &n_tags, &max_tags);
-    LOG("After tags, status: %d\n", status);
+    LOG("After tags, status: %d", status);
     status = status && parse_en_passant_header(&buf, &board_state.en_passant);
-    LOG("After en passant, status: %d\n", status);
-    debug_print(&board_state.en_passant, tags, n_tags);
+    LOG("After en passant, status: %d", status);
+    log_en_passant_header(&board_state.en_passant);
+    log_tags(tags, n_tags);
 
     bool has_moves = false;
     struct pgn_token token;
     enum safe_bool state;
 
-    LOG("First ply with player %s.\n", PLAYER_NAMES[board_state.current_player]);
+    LOG("First ply with player %s.", PLAYER_NAMES[board_state.current_player]);
     while (!is_buf_empty(&buf)) {
         if ((state = parse_move(&buf, &board_state, &token)) != TRUE) {
             break;
@@ -580,7 +580,7 @@ int uncompress(const struct args* args) {
         apply_move_token(&token, &board_state);
 
         if (is_token_move(token.type)) {
-            LOG("Cur ply from player %s and Prev ply from player %s\n", PLAYER_NAMES[token.move.move.player], PLAYER_NAMES[board_state.previous_move.player]);
+            LOG("Cur ply from player %s and Prev ply from player %s", PLAYER_NAMES[token.move.move.player], PLAYER_NAMES[board_state.previous_move.player]);
             next_turn(&board_state);
             has_moves = true;
         } else {
@@ -590,7 +590,7 @@ int uncompress(const struct args* args) {
         free_token(&token);
 
         print_board(board_state.board, stdout);
-        LOG("Next ply (turn %d) with player %s.\n", board_state.move_turn, PLAYER_NAMES[board_state.current_player]);
+        LOG("Next ply (turn %d) with player %s.", board_state.move_turn, PLAYER_NAMES[board_state.current_player]);
     }
     if (state == ERROR) {
         status = false;

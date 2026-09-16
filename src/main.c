@@ -11,21 +11,14 @@
 #include "../include/source_location.h"
 #include "../include/uncompress.h"
 
-static void print_args(const struct args* args) {
-    printf(
-        "args = {\n"
-        "\tcompress = %d\n"
-        "\tuncompress = %d\n"
-        "\thelp = %d\n"
-        "\tinput = '%s'\n"
-        "\toutput = '%s'\n"
-        "}\n",
-        args->compress,
-        args->uncompress,
-        args->help,
-        (args->input == NULL) ? "NULL" : args->input,
-        (args->output == NULL) ? "NULL" : args->output
-    );
+static void log_args(const struct args* args) {
+    LOG("args = {");
+    LOG_NO_LOCATION("\tcompress = %d", args->compress);
+    LOG_NO_LOCATION("\tuncompress = %d",  args->uncompress);
+    LOG_NO_LOCATION("\thelp = %d", args->help);
+    LOG_NO_LOCATION("\tinput = '%s'", (args->input == NULL) ? "NULL" : args->input);
+    LOG_NO_LOCATION("\toutput = '%s'", (args->output == NULL) ? "NULL" : args->output);
+    LOG_NO_LOCATION("}");
 }
 
 static const struct args EMPTY_ARGS = {
@@ -100,7 +93,7 @@ int main(int argc, char* argv[]) {
     if (!parse_args(&args, argc, argv)) {
         return EXIT_FAILURE;
     }
-    print_args(&args);
+    log_args(&args);
     if (args.help || argc == 1) {
         help();
         return EXIT_SUCCESS;

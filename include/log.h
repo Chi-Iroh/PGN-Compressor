@@ -23,3 +23,4 @@ if (log_enabled) {                                                              
 #define ERR(...) LOG_BASE_WITH_LOCATION(fprintf, stderr, __VA_ARGS__)
 #define LOGFILE(file, ...) LOG_BASE_WITH_LOCATION(fprintf, file, __VA_ARGS__)
 #define LOGFILE_NO_LOCATION(file, ...) LOG_BASE_NO_LOCATION(fprintf, file, __VA_ARGS__)
+#define LOG_NO_LOCATION(...) LOG_BASE_NO_LOCATION(fprintf, stdout, __VA_ARGS__)

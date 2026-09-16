@@ -142,29 +142,35 @@ uint8_t how_many_bits_to_hold_number(uint8_t n) {
     return count;
 }
 
-void binary_print(const uint8_t* buf, size_t size) {
+void log_binary_file(const char* filename, const uint8_t* buf, size_t size) {
+    LOG("Content of %s (%zu byte%s):", filename, size, size >= 2 ? "s" : "");
+
     size_t i = 0;
     const bool is_size_multiple_of_8 = size % 8 == 0;
     const size_t n_rows = size / 8 + !is_size_multiple_of_8;
     for (size_t row = 0; row < n_rows; row++) {
+        char line[128] = { 0 };
+        char* head = line;
+
         const size_t n_cols = (!is_size_multiple_of_8 && row == n_rows - 1) ? size % 8 : 8; // if not multiple of 8 and in last row, then the remainder, otherwise 8
         for (size_t col = 0; col < 8; col++) {
             if (col > 0) {
-                putchar(' ');
+                *head++ = ' ';
             }
             if (col >= n_cols) {
-                printf("  ");
+                head += sprintf(head, "  ");
             } else {
-                printf("%02X", buf[i++]);
+                head += sprintf(head, "%02X", buf[i++]);
             }
         }
 
-        printf(" | ");
+        head += sprintf(head, " | ");
         i -= n_cols;
         for (size_t col = 0; col < n_cols; col++) {
             const char c = buf[i++];
-            putchar(isprint(c) ? c : '?');
+            *head++ = isprint(c) ? c : '?';
         }
-        putchar('\n');
+
+        LOG_NO_LOCATION("%s", line);
     }
 }

@@ -194,7 +194,7 @@ uint8_t count_how_many_pieces_of_same_type_can_move_to_square(struct board_state
             if (_piece->player == player && _piece->type == piece) {
                 if (can_move_to[_piece->type](from, *to, player, state)) {
                     coords[count++] = from;
-                    LOG("%c%hhu can go to %c%hhu\n", 'a' + from.file, 1 + from.rank, 'a' + to->file, 1 + to->rank);
+                    LOG("%c%hhu can go to %c%hhu", 'a' + from.file, 1 + from.rank, 'a' + to->file, 1 + to->rank);
                 }
             }
         }
