@@ -33,7 +33,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/pgn_compressor",
-            "args": ["-u", "cpgn/example.cpgn"],
+            "args": ["-u", "cpgn/readme_example.cpgn"],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
