@@ -150,7 +150,7 @@ static bool is_in_check(struct board_state* state, enum player player, struct co
                 };
                 if (piece->type == KING) {
                     if (can_king_move_to(from, king_coord, opponent, state, false)) {
-                        // we only verify is opponent king couldn't recapture our king
+                        // we only verify if opponent king couldn't recapture our king
                         // so we won't verify is that opponent king would put itself in check by doing so
                         return true;
                     }
