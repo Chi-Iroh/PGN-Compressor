@@ -146,7 +146,7 @@ void free_tags(struct tag** tags, size_t* n_tags, size_t* max_tags) {
     *max_tags = 0;
 }
 
-static bool does_move_cause_check(struct board_state* state, struct pgn_token* token) {
+static enum check_type does_move_cause_check(struct board_state* state, struct pgn_token* token) {
     // we must apply the move before calling is_player_checked, but we do it on a temp board, as the move is applied in the main uncompressing loop
     struct board_state copy = copy_board_state(state);
     apply_move_token(token, &copy);

@@ -138,25 +138,26 @@ bool can_pawn_move_to(struct coord from, struct coord to, enum player moving_pla
         return true;
     }
 
-    const int rank_diff = abs(from.rank - to.rank);
+    const int rank_diff_raw = to.rank - from.rank;
+    const int rank_diff_abs = abs(rank_diff_raw);
     const int increment = to.rank > from.rank ? 1 : -1;
     if (from.file == to.file) {
 
-        if (rank_diff > 2) {
+        if (rank_diff_abs > 2) {
             return false;
         }
-        for (int i = 1; i <= rank_diff; i++) {
+        for (int i = 1; i <= rank_diff_abs; i++) {
             if (board_at(state->board, from.file, from.rank + i * increment)->type != EMPTY_SQUARE) {
                 return false;
             }
         }
         return true;
     } else { // capturing
-        if (rank_diff != 1) {
+        if (rank_diff_abs != 1) {
             return false;
         } else if (abs(from.file - to.file) != 1) {
             return false; // when capturing, moves 1 file
-        } else if (rank_diff != increment) {
+        } else if (rank_diff_raw != increment) {
             return false; // when capturing, moves 1 rank forward
         }
         if (board_at_coord(state->board, to)->type != EMPTY_SQUARE) {
