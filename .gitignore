@@ -6,3 +6,4 @@ tests/test
 *.d
 TODO.txt
 *.log
+**/__pycache__
