@@ -129,7 +129,7 @@ error:
 
 void free_tags(struct tag** tags, size_t* n_tags, size_t* max_tags) {
     ASSERT_PRINTF_RETURN(n_tags != NULL, "Tags size is NULL !");
-    if (tags == NULL) {
+    if (tags == NULL || *tags == NULL) {
         return;
     }
 
