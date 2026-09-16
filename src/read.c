@@ -74,19 +74,20 @@ static char* raw_read(FILE* file, size_t* size) {
     if (_file_size < 0) {
         return NULL;
     }
-    char* const buf = malloc(sizeof(char) * (_file_size + 1));
+    const size_t file_size = (size_t)_file_size;
+    char* const buf = malloc(sizeof(char) * (file_size + 1));
 
     if (buf == NULL) {
-        errprintf("Error while allocating %zu bytes", _file_size + 1);
+        errprintf("Error while allocating %zu bytes", file_size + 1);
         return NULL;
     }
-    buf[_file_size] = '\0';
-    if (fread(buf, sizeof(char), _file_size, file) != _file_size) {
+    buf[file_size] = '\0';
+    if (fread(buf, sizeof(char), file_size, file) != file_size) {
         perror("File incompletely read !\n");
         free(buf);
         return NULL;
     }
-    *size = _file_size;
+    *size = file_size;
     return buf;
 }
 
