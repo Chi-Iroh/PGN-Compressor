@@ -562,7 +562,7 @@ int uncompress(const struct args* args) {
 
     bool has_moves = false;
     struct pgn_token token;
-    enum safe_bool state;
+    enum safe_bool state = TRUE;
 
     LOG("First ply with player %s.", PLAYER_NAMES[board_state.current_player]);
     while (!is_buf_empty(&buf)) {
