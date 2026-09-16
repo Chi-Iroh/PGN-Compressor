@@ -58,15 +58,22 @@ char* read_pgn_stdin(size_t* size) {
     return buf;
 }
 
-static size_t file_size(FILE* file) {
+static long file_size(FILE* file) {
     fseek(file, 0, SEEK_END);
-    const size_t size = ftell(file);
+    const long size = ftell(file);
     rewind(file);
+    if (errno != 0) {
+        perror("Cannot get input file size");
+        return -1;
+    }
     return size;
 }
 
 static char* raw_read(FILE* file, size_t* size) {
-    const size_t _file_size = file_size(file);
+    const long _file_size = file_size(file);
+    if (_file_size < 0) {
+        return NULL;
+    }
     char* const buf = malloc(sizeof(char) * (_file_size + 1));
 
     if (buf == NULL) {
