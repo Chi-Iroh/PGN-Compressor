@@ -82,6 +82,14 @@ void print_pgn_token(struct pgn_token* token, FILE* file) {
         fputs(token->move.move.extra_infos.infos.king_infos.castling == KINGSIDE ? "O-O" : "O-O-O", file);
         break;
 
+    case END_OF_THE_GAME:
+        if (token->move.winner.is_draw) {
+            fputs("1/2-1/2", file);
+        } else {
+            fputs(token->move.winner.winner == WHITE ? "1-0" : "0-1", file);
+        }
+        break;
+
     default:
         print_move(&token->move.move, file, false);
         break;
