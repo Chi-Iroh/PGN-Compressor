@@ -31,6 +31,9 @@ static void _print_move(const struct move* move, FILE* file) {
         head += sprintf(head, " e.p.");
     }
 
+    // Silence unused variable warning
+    (void)head;
+
     if (file == NULL) {
         LOG("%s", buf);
     } else {
