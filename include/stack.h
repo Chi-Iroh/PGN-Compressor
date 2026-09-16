@@ -40,14 +40,16 @@ bool stack_##name##_push(struct stack_##name* stack, type elem) {               
         if (stack->stack == NULL) {                                                     \
             return false;                                                               \
         }                                                                               \
+        stack->size = 1;                                                                \
         stack->capacity = 1;                                                            \
     } else if (stack->size == stack->capacity) {                                        \
         type* const new_stack = malloc(sizeof(type) * stack->capacity * 2);             \
         if (new_stack == NULL) {                                                        \
-            free(stack->stack);                                                         \
             return false;                                                               \
         }                                                                               \
         stack->capacity *= 2;                                                           \
+        free(stack->stack);                                                             \
+        stack->stack = new_stack;                                                       \
     }                                                                                   \
     stack->stack[stack->size++] = elem;                                                 \
     return true;                                                                        \
