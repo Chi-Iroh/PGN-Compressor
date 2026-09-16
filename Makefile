@@ -14,12 +14,13 @@ DEBUG   =   -ggdb3 -DDEBUG_MODE
 
 RELEASE = -O2
 SANITIZE	=	-fsanitize=address,undefined -fsanitize-recover=address,undefined
-ANALYZER	=
 C_VERSION	=	-std=c99
 
 CFLAGS  +=  -Wall -Wextra -pedantic -fsigned-char $(C_VERSION)
 LDFLAGS	+=
 LD_PRELOAD	=
+
+ANALYZER_LOG    =   analyzer.log
 
 NAME    =   pgn_compressor
 
@@ -39,11 +40,9 @@ sanitize: LD_PRELOAD += -lasan -lubsan
 sanitize: $(NAME)
 resanitize: fclean sanitize
 
-.PHONY: analyzer reanalyzer
-analyzer: ANALYZER += on
-analyzer: CFLAGS += $(DEBUG) -fanalyzer
-analyzer: $(NAME)
-reanalyzer: fclean analyzer
+.PHONY: analyzer
+analyzer:
+	@$(CC) --analyze -Xanalyzer -analyzer-output=text $(SRC) 2>&1 | tee $(ANALYZER_LOG)
 
 $(TESTS_EXE): $(OBJ_NO_MAIN) $(TESTS_OBJ)
 	$(CC) -lcriterion $(OBJ_NO_MAIN) $(TESTS_OBJ) -o $(TESTS_EXE)
@@ -72,23 +71,13 @@ display_info:
 	@echo LDFLAGS : $(LD_PRELOAD) $(LDFLAGS)
 	@echo -------------
 
-.PHONY: remove_old_analyzer
-remove_old_analyzer:
-	@if [[ "$(ANALYZER)" != "" ]]; then		\
-		rm -f ./analyzer.log;				\
-		echo "Removing old analyzer log.";	\
-	fi
 
-$(NAME): display_info remove_old_analyzer $(OBJ)
+$(NAME): display_info $(OBJ)
 	@$(CC) $(OBJ) $(LD_PRELOAD) $(LDFLAGS) -o $(NAME)
 
 obj/%.o: src/%.c
 	@echo "$< -> $@"
-	@if [[ "$(ANALYZER)" != "" ]]; then					\
-		$(CC) -c $(CFLAGS) $< -o $@ 2>&1 | tee -a ./analyzer.log;	\
-	else												\
-		$(CC) -c $(CFLAGS) $< -o $@;					\
-	fi
+	@$(CC) -c $(CFLAGS) $< -o $@
 
 tests/obj/%.o: tests/%.c
 	$(CC) $(CFLAGS) -c $< -o $@ -g3 -O0
@@ -102,7 +91,7 @@ clean_vgcore:
 .PHONY: clean
 clean: clean_vgcore
 	@echo Removing temporary and object files.
-	rm -f $(OBJ)
+	rm -f $(OBJ) $(ANALYZER_LOG)
 
 .PHONY: fclean
 fclean: clean
