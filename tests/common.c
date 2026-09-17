@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 #include "../include/apply_move.h"
-#include "./move.h"
+#include "./common.h"
 
 enum token_type piece_to_token_type(enum piece_type piece) {
     switch (piece) {

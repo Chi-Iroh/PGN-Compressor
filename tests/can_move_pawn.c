@@ -4,7 +4,7 @@
 #include "../include/pawn.h"
 #include "../include/print.h"
 #include "../include/strings.h"
-#include "./move.h"
+#include "./common.h"
 
 Test(can_pawn_move, can_move_or_capture) {
     struct board_state state = empty_board_state();
