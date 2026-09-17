@@ -54,16 +54,6 @@ testsclean:
 
 retests: testsclean tests
 
-.PHONY: check_version
-check_version:
-	@echo -------------
-	@echo -n "CC : "
-	@if [[ "$(CC_VERSION)" == "" ]]; then	\
-		echo 'Bad CC version !';			\
-		echo $(CC_VERSION_ERROR);			\
-		exit 1;								\
-	fi
-
 .PHONY: display_info
 display_info:
 	@$(CC) --version | head -n 1
