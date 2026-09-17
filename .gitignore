@@ -3,6 +3,7 @@ pgn_compressor
 pgn_compressor.exe
 tests/test
 *gdb*
+vgcore.*
 *.d
 TODO.txt
 *.log

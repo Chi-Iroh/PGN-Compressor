@@ -3,6 +3,7 @@ SRC_NO_MAIN	=	$(filter-out src/main.c, $(wildcard src/*.c))
 SRC 	=	$(SRC_NO_MAIN) src/main.c
 OBJ_NO_MAIN	=	$(patsubst src/%,obj/%,$(SRC_NO_MAIN:.c=.o))
 OBJ =   $(OBJ_NO_MAIN) obj/main.o
+DEPS    =   $(patsubst src/%,deps/%,$(SRC:.c=.d))
 
 TESTS_DIR	=	tests
 TESTS_SRC	=	$(wildcard $(TESTS_DIR)/*.c)
@@ -27,18 +28,18 @@ NAME    =   pgn_compressor
 .PHONY: all re
 all: CFLAGS += $(RELEASE)
 all: $(NAME)
-re: fclean all
+re: cleanall all
 
 .PHONY: debug redebug
 debug: CFLAGS += $(DEBUG)
 debug: $(NAME)
-redebug: fclean debug
+redebug: cleanall debug
 
 .PHONY: sanitize resanitize
 sanitize: CFLAGS += $(DEBUG) $(SANITIZE)
 sanitize: LD_PRELOAD += -lasan -lubsan
 sanitize: $(NAME)
-resanitize: fclean sanitize
+resanitize: cleanall sanitize
 
 .PHONY: analyzer
 analyzer:
@@ -54,36 +55,23 @@ testsclean:
 
 retests: testsclean tests
 
-.PHONY: display_info
-display_info:
-	@$(CC) --version | head -n 1
-	@echo CFLAGS : $(CFLAGS)
-	@echo LDFLAGS : $(LD_PRELOAD) $(LDFLAGS)
-	@echo -------------
-
-
-$(NAME): display_info $(OBJ)
+$(NAME): $(OBJ)
 	@$(CC) $(OBJ) $(LD_PRELOAD) $(LDFLAGS) -o $(NAME)
+
+-include $(DEPS)
 
 obj/%.o: src/%.c
 	@echo "$< -> $@"
-	@$(CC) -c $(CFLAGS) $< -o $@
+	@$(CC) -c $(CFLAGS) $< -o $@ -MMD -MF deps/$*.d
 
 tests/obj/%.o: tests/%.c
-	$(CC) $(CFLAGS) -c $< -o $@ -g3 -O0
-
-.PHONY: clean_vgcore
-clean_vgcore:
-	@echo Removing Core Dumped files.
-	@rm -f vgcore.*
-	@rm -f valgrind*.log.core.*
+	@echo "$< -> $@"
+	@$(CC) $(CFLAGS) -c $< -o $@ -g3 -O0
 
 .PHONY: clean
-clean: clean_vgcore
-	@echo Removing temporary and object files.
-	rm -f $(OBJ) $(ANALYZER_LOG)
+clean:
+	rm -f $(OBJ) $(ANALYZER_LOG) $(DEPS)
 
-.PHONY: fclean
-fclean: clean
-	@echo Removing binary.
+.PHONY: cleanall
+cleanall: clean
 	rm -f $(NAME)
