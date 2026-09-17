@@ -1,15 +1,19 @@
 SHELL = /bin/bash
-SRC_NO_MAIN	=	$(filter-out src/main.c, $(wildcard src/*.c))
-SRC 	=	$(SRC_NO_MAIN) src/main.c
-OBJ_NO_MAIN	=	$(patsubst src/%,obj/%,$(SRC_NO_MAIN:.c=.o))
-OBJ =   $(OBJ_NO_MAIN) obj/main.o
-DEPS    =   $(patsubst src/%,deps/%,$(SRC:.c=.d))
+SRC_DIR =   src
+OBJ_DIR =   obj
+TESTS_DIR =   tests
+DEPS_DIR    =   deps
 
-TESTS_DIR	=	tests
+SRC_NO_MAIN	=	$(filter-out $(SRC_DIR)/main.c, $(wildcard $(SRC_DIR)/*.c))
+SRC 	=	$(SRC_NO_MAIN) $(SRC_DIR)/main.c
+OBJ_NO_MAIN	=	$(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(SRC_NO_MAIN:.c=.o))
+OBJ =   $(OBJ_NO_MAIN) $(OBJ_DIR)/main.o
+DEPS    =   $(patsubst $(SRC_DIR)/%,$(DEPS_DIR)/%,$(SRC:.c=.d))
+
 TESTS_SRC	=	$(wildcard $(TESTS_DIR)/*.c)
-TESTS_OBJ	=	$(patsubst tests/%,tests/obj/%,$(TESTS_SRC:.c=.o))
-TESTS_DEPS  =   $(patsubst tests/%,tests/deps/%,$(TESTS_SRC:.c=.d))
-TESTS_EXE	=	tests/test
+TESTS_OBJ	=	$(patsubst $(TESTS_DIR)/%,$(TESTS_DIR)/$(OBJ_DIR)/%,$(TESTS_SRC:.c=.o))
+TESTS_DEPS  =   $(patsubst $(TESTS_DIR)/%,$(TESTS_DIR)/$(DEPS_DIR)/%,$(TESTS_SRC:.c=.d))
+TESTS_EXE	=	$(TESTS_DIR)/test
 
 CC  =   clang
 DEBUG   =   -ggdb3 -DDEBUG_MODE
@@ -62,13 +66,13 @@ $(NAME): $(OBJ)
 -include $(DEPS)
 -include $(TESTS_DEPS)
 
-obj/%.o: src/%.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@echo "$< -> $@"
-	@$(CC) -c $(CFLAGS) $< -o $@ -MMD -MF deps/$*.d
+	@$(CC) -c $(CFLAGS) $< -o $@ -MMD -MF $(DEPS_DIR)/$*.d
 
-tests/obj/%.o: tests/%.c
+$(TESTS_DIR)/$(OBJ_DIR)/%.o: $(TESTS_DIR)/%.c
 	@echo "$< -> $@"
-	@$(CC) $(CFLAGS) -c $< -o $@ -g3 -O0 -MMD -MF tests/deps/$*.d
+	@$(CC) $(CFLAGS) -c $< -o $@ -g3 -O0 -MMD -MF $(TESTS_DIR)/$(DEPS_DIR)/$*.d
 
 .PHONY: clean
 clean: testsclean
