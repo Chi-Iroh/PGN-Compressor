@@ -413,7 +413,7 @@ There are 2 more bits :
     </tr>
 </table>
 
-The decompressor stops when it reads these bits (end of the game).  
+The decompressor stops when it reads these bits (end of the game), unless if it's in alternative moves.  
 
 ## Ambiguous moves
 

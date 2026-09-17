@@ -563,6 +563,7 @@ int uncompress(const struct args* args) {
     bool has_moves = false;
     struct pgn_token token;
     enum safe_bool state = TRUE;
+    unsigned alternative_moves_nesting = 0;
 
     LOG("First ply with player %s.", PLAYER_NAMES[board_state.current_player]);
     while (!is_buf_empty(&buf)) {
@@ -573,7 +574,15 @@ int uncompress(const struct args* args) {
             putchar(' ');
         }
         print_pgn_token(&token, stdout);
-        if (token.type == END_OF_THE_GAME) {
+
+        if (token.type == ALTERNATIVE_MOVES_START) {
+            alternative_moves_nesting++;
+        } else if (token.type == ALTERNATIVE_MOVES_END) {
+            ASSERT_PRINTF_EXIT_FAILURE(alternative_moves_nesting > 0, "Cannot end alternative moves, none were even started before !");
+            alternative_moves_nesting--;
+        }
+
+        if (token.type == END_OF_THE_GAME && alternative_moves_nesting == 0) {
             free_token(&token);
             break;
         }
