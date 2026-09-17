@@ -1,7 +1,7 @@
 #include <criterion/criterion.h>
 
 #include "../include/coord_constants.h"
-#include "../include/debug.h"
+#include "../include/print.h"
 #include "../include/queen.h"
 #include "./move.h"
 

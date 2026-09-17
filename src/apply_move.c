@@ -1,9 +1,9 @@
 #include <memory.h>
 
 #include "../include/apply_move.h"
-#include "../include/debug.h"
 #include "../include/king.h"
 #include "../include/log.h"
+#include "../include/print.h"
 #include "../include/source_location.h"
 
 void move_piece(board board, const struct coord* from, const struct coord* to) {

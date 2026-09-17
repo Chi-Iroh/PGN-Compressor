@@ -1,6 +1,7 @@
 #pragma once
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <stdint.h>
 
 #include "bits_constants.h"
@@ -182,6 +183,9 @@ bool board_end_alternative_moves(struct board_state* state, struct pgn_token* to
 
 struct piece* board_at_coord(board board, struct coord coord);
 struct piece* board_at(board board, int file, int rank);
+
+void print_board(board board, FILE* file);
+void read_board(board dest, char board_str[BOARD_SIZE][BOARD_SIZE + 1]);
 
 /**
  * @note if the opponent king can attack the square, we must check if going to the square puts it in check.

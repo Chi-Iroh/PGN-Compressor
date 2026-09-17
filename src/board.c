@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <inttypes.h>
 #include <memory.h>
 
@@ -6,6 +7,7 @@
 #include "../include/error.h"
 #include "../include/log.h"
 #include "../include/piece.h"
+#include "../include/strings.h"
 
 #include "../include/bishop.h"
 #include "../include/king.h"
@@ -297,3 +299,63 @@ enum check_type is_player_checked(struct board_state* state, enum player player,
     }
     FAIL("Error in check detection");
 }
+
+void print_board(board board, FILE* file) {
+    LOGFILE_NO_LOCATION(file, "WHITE = UPPERCASE, black = lowercase");
+    LOGFILE_NO_LOCATION(file, "   A B C D E F G H");
+    LOGFILE_NO_LOCATION(file, "  +-+-+-+-+-+-+-+-+");
+
+    for (uint8_t rank = 0; rank < BOARD_SIZE; rank++) {
+        char line_buf[64] = { 0 };
+        char* line_head = line_buf;
+
+        line_head += sprintf(line_head, "%" PRIu8 " |", rank + 1);
+        for (uint8_t _file = 0; _file < BOARD_SIZE; _file++) {
+            const struct piece* piece = board_at(board, _file, rank);
+            char piece_char;
+            if (piece->type == PAWN) {
+                piece_char = 'P';
+            } else if (piece->type == EMPTY_SQUARE) {
+                piece_char = ' ';
+            } else {
+                piece_char = PIECE_CHAR[piece->type];
+            }
+            if (piece->player == BLACK) {
+                piece_char = tolower(piece_char);
+            }
+            line_head += sprintf(line_head, "%c|", piece_char);
+        }
+        LOGFILE_NO_LOCATION(file, "%s", line_buf);
+        LOGFILE_NO_LOCATION(file, "  +-+-+-+-+-+-+-+-+");
+    }
+    LOGFILE_NO_LOCATION(file, "   A B C D E F G H");
+}
+
+void read_board(board dest, char board_str[BOARD_SIZE][BOARD_SIZE + 1]) {
+    for (unsigned char rank = 0; rank < BOARD_SIZE; rank++) {
+        for (unsigned char file = 0; file < BOARD_SIZE; file++) {
+            char c = board_str[rank][file];
+            struct piece piece = {
+                .player = c == ' ' ? INVALID_PLAYER : (isupper(c) ? WHITE : BLACK),
+                .type = EMPTY_SQUARE
+            };
+
+            c = toupper(c);
+            if (c == 'P') {
+                piece.type = PAWN;
+            } else if (c == 'K') {
+                piece.type = KING;
+            } else if (c == 'Q') {
+                piece.type = QUEEN;
+            } else if (c == 'B') {
+                piece.type = BISHOP;
+            } else if (c == 'R') {
+                piece.type = ROOK;
+            } else if (c == 'N') {
+                piece.type = KNIGHT;
+            }
+            dest[rank][file] = piece;
+        }
+    }
+}
+

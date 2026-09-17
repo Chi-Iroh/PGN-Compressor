@@ -1,8 +1,8 @@
 #include <criterion/criterion.h>
 
 #include "../include/coord_constants.h"
-#include "../include/debug.h"
 #include "../include/pawn.h"
+#include "../include/print.h"
 #include "../include/strings.h"
 #include "./move.h"
 

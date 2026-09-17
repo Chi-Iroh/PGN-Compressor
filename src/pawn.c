@@ -2,11 +2,11 @@
 #include <string.h>
 
 #include "../include/common.h"
-#include "../include/debug.h"
 #include "../include/error.h"
 #include "../include/log.h"
 #include "../include/parse.h"
 #include "../include/piece.h"
+#include "../include/print.h"
 #include "../include/pawn.h"
 #include "../include/test.h"
 
