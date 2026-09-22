@@ -37,6 +37,18 @@ make CC=gcc debug
 Builds a debug executable using GCC.  
 Using an other compiler than Clang may fail (due to compiler flags not being the same), however it should work with GCC as it's close to Clang.  
 
+Additionally, you can run `make_cpgn.py` with Python 3.x to generate compressed PGN files in `cpgn/` directory.  
+
+## Run
+```bash
+./pgn_compressor -c decompressed.pgn -o compressed.cpgn # Compression
+./pgn_compressor -u compressed.cpgn -o decompressed.pgn # Decompression
+
+# Help
+./pgn_compressor --help
+./pgn_compressor -h
+```
+
 ## AI policy
 
 Nothing (code, documentation, etc.) has been AI-generated in this project.  
